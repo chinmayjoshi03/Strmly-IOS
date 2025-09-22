@@ -6,9 +6,9 @@ export default {
     slug: "strmly",
     scheme: "strmly",
     owner: "strmly-technologies",
-    version: "1.0.2",
+    version: "1.0.3",
     orientation: "portrait",
-    icon: "./assets/images/logo.png",
+    icon: "./assets/images/logo2.png",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
     ios: {
@@ -16,7 +16,7 @@ export default {
       supportsTablet: true
     },
     android: {
-      versionCode: 3,
+      versionCode: 4,
       adaptiveIcon: {
         foregroundImage: "./assets/images/logo3.jpg",
         backgroundColor: "#000"

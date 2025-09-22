@@ -310,8 +310,9 @@ const VideoProgressBar = ({
     if (!hasTriggered2Percent.current && percentWatched >= 2) {
       hasTriggered2Percent.current = true;
       console.log(`Triggering 2% milestone for video ${videoId}`);
-      // saveVideoToHistory();
-      // incrementVideoViews();
+      saveVideoToHistory();
+      incrementVideoViews();
+
     }
   }, [
     currentTime,
