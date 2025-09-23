@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from "react-native";
 import { ChevronLeft, ChevronDown } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -225,11 +226,13 @@ const Dashboard = () => {
               colors={["#000000", "#0a0a0a", "#1a1a1a"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="rounded-2xl p-6 mb-6"
-              style={{ width: 360, height: 273, alignSelf: "center" }}
+              className="rounded-2xl px-8 py-6 mb-6"
+              style={{ width: 380, height: 273, alignSelf: "center" }}
             >
               {/* Time Filter */}
-              <View className="flex-row justify-between items-center mb-4">
+              <View className="flex-row justify-between items-center mb-4"
+              style={{paddingRight: Platform.OS == "ios" ? 2 : 0}}
+              >
                 <Text
                   className="text-white text-lg font-medium"
                   style={{ fontFamily: "Inter" }}
@@ -289,7 +292,7 @@ const Dashboard = () => {
               {/* Stats Content */}
               {activeTab === "revenue" ? (
                 /* Revenue Breakdown */
-                <View className="space-y-2">
+                <View className="space-y-2 px-2">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"
@@ -363,7 +366,7 @@ const Dashboard = () => {
                 </View>
               ) : (
                 /* Non-Revenue Stats */
-                <View className="space-y-2">
+                <View className="space-y-2 px-2">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"

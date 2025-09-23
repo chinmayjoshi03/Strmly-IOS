@@ -12,6 +12,7 @@ import {
   ImageBackground,
   ScrollView,
   BackHandler,
+  Platform,
 } from "react-native";
 import { useFonts } from "expo-font";
 import { useRouter } from "expo-router";
@@ -23,8 +24,6 @@ import { CONFIG } from "@/Constants/config";
 import VideoPlayer from "@/app/(dashboard)/long/_components/VideoPlayer";
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useVideosStore } from "@/store/useVideosStore";
-import { VideoItemType } from "@/types/VideosType";
 
 const { width, height: page_height } = Dimensions.get("window");
 const itemSize = width / 3;
@@ -37,11 +36,16 @@ const SearchScreen: React.FC = () => {
   const [trendingLoading, setTrendingLoading] = useState<boolean>(false);
   const [trendingError, setTrendingError] = useState<string>("");
 
+  // Video player state
+  const [isVideoPlayerActive, setIsVideoPlayerActive] = useState(false);
+  const [currentVideoData, setCurrentVideoData] = useState<any>(null);
+  const [currentVideoList, setCurrentVideoList] = useState<any[]>([]);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+
   const tabs = ["Videos", "Accounts", "Communities"];
 
   const { token } = useAuthStore();
-  const { setVideosInZustand, clearVideos } = useVideosStore();
-
   const {
     searchResults,
     isLoading: searchLoading,
@@ -67,6 +71,23 @@ const SearchScreen: React.FC = () => {
   // useEffect(() => {
   //     loadTrendingVideos();
   // }, []);
+
+  // Handle back button press
+  useEffect(() => {
+    const backAction = () => {
+      if (isVideoPlayerActive) {
+        closeVideoPlayer();
+        return true; // Prevent default back action
+      }
+      return false; // Allow default back action
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+    return () => backHandler.remove();
+  }, [isVideoPlayerActive]);
 
   // Handle search with debouncing
   useEffect(() => {
@@ -172,48 +193,37 @@ const SearchScreen: React.FC = () => {
     }
   };
 
-  function sanitizeVideo(raw: any): VideoItemType {
-    return {
-      ...raw,
-      video: raw.videoUrl,
-      language: raw.Videolanguage ?? "unknown",
-      access: {
-        ...raw.access,
-        price: raw.amount ?? 0,
-      },
-      creatorPassDetails: raw.creatorPassDetails ?? null,
-      series: raw.series ?? null,
-      comments: Array.isArray(raw.comments) ? raw.comments : [],
-    };
-  }
-
   const navigateToVideoPlayer = (videoData: any, allVideos: any[]) => {
-    clearVideos();
-
     console.log(
       "🎬 Opening video player for:",
       videoData.title || videoData.name
     );
-
-    // setCurrentVideoList(allVideos);
-    // console.log(videoData)
-    // console.log(JSON.stringify(videoData, null, 2));
-    setVideosInZustand([sanitizeVideo(videoData)]);
-
-
     // Find the index of the current video in the array
     const currentIndex = allVideos.findIndex(
       (video) => video._id === videoData._id
     );
 
-    router.push({
-      pathname: "/long/GlobalVideoPlayer",
-      params: {
-        videoType: videoData.type == "series" ? "series" : null,
-        startIndex: currentIndex >= 0 ? currentIndex : 0,
-      },
-    });
+    // Set video player state to show the integrated player
+    setCurrentVideoData(videoData);
+    setCurrentVideoList(allVideos);
+    setCurrentVideoIndex(currentIndex >= 0 ? currentIndex : 0);
+    setIsVideoPlayerActive(true);
   };
+
+  const closeVideoPlayer = () => {
+    setIsVideoPlayerActive(false);
+    setCurrentVideoData(null);
+    setCurrentVideoList([]);
+    setCurrentVideoIndex(0);
+    setShowCommentsModal(false);
+  };
+
+  // Define the viewable items changed callback at component level
+  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setCurrentVideoIndex(viewableItems[0].index);
+    }
+  }, []);
 
   // Render video items with thumbnail styling
   const renderVideoItem = ({ item }: { item: any }) => {
@@ -261,62 +271,64 @@ const SearchScreen: React.FC = () => {
   };
 
   // Render account items like followers/following in profile
-  // Render account items like followers/following in profile
-  const renderAccountItem = ({ item }: { item: any }) => {
-    const userName = item.username || item.name || "user";
-    const profilePhoto = item.profile_photo || item.profile_picture;
-    const userId = item._id || item.id;
+ // Render account items like followers/following in profile
+const renderAccountItem = ({ item }: { item: any }) => {
+  const userName = item.username || item.name || "user";
+  const profilePhoto = item.profile_photo || item.profile_picture;
+  const userId = item._id || item.id;
+  
+  // Calculate followers count from the array if followers_count is not provided
+  const followersCount = item.followers_count ?? 
+    (item.followers ? item.followers.length : 0);
 
-    // Calculate followers count from the array if followers_count is not provided
-    const followersCount =
-      item.followers_count ?? (item.followers ? item.followers.length : 0);
+  console.log("🖼️ Account image data:", {
+    username: userName,
+    profile_photo: item.profile_photo,
+    profile_picture: item.profile_picture,
+    followers_count: followersCount,
+    finalUrl: getProfilePhotoUrl(profilePhoto, "user"),
+  });
 
-    console.log("🖼️ Account image data:", {
-      username: userName,
-      profile_photo: item.profile_photo,
-      profile_picture: item.profile_picture,
-      followers_count: followersCount,
-      finalUrl: getProfilePhotoUrl(profilePhoto, "user"),
-    });
-
-    return (
-      <TouchableOpacity
-        style={styles.accountRow}
-        onPress={() => {
-          if (userId) {
-            navigateToProfile(userId);
-          } else {
-            console.log("⚠️ No user ID found for account:", item.username);
-          }
-        }}
-      >
-        <View style={styles.accountRowContent}>
-          <Image
-            source={{ uri: getProfilePhotoUrl(profilePhoto, "user") }}
-            style={styles.accountAvatar}
-            onError={() => {
-              console.log(
-                "Failed to load account profile photo:",
-                item.username
-              );
-            }}
-          />
-          <View style={styles.accountInfo}>
-            <Text style={styles.accountName}>{item.username}</Text>
-            {item.bio && (
-              <Text style={styles.accountBio} numberOfLines={1}>
-                {item.bio}
-              </Text>
-            )}
-          </View>
+  return (
+    <TouchableOpacity
+      style={styles.accountRow}
+      onPress={() => {
+        if (userId) {
+          navigateToProfile(userId);
+        } else {
+          console.log("⚠️ No user ID found for account:", item.username);
+        }
+      }}
+    >
+      <View style={styles.accountRowContent}>
+        <Image
+          source={{ uri: getProfilePhotoUrl(profilePhoto, "user") }}
+          style={styles.accountAvatar}
+          onError={() => {
+            console.log(
+              "Failed to load account profile photo:",
+              item.username
+            );
+          }}
+        />
+        <View style={styles.accountInfo}>
+          <Text style={styles.accountName}>{item.username}</Text>
+          {item.bio && (
+            <Text style={styles.accountBio} numberOfLines={1}>
+              {item.bio}
+            </Text>
+          )}
         </View>
-        <View style={styles.accountStats}>
-          <Text style={styles.accountStatsNumber}>{followersCount}</Text>
-          <Text style={styles.accountStatsLabel}>Followers</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+      </View>
+      <View style={styles.accountStats}>
+        <Text style={styles.accountStatsNumber}>
+          {followersCount}
+        </Text>
+        <Text style={styles.accountStatsLabel}>Followers</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
   // Render community items like communities in profile
   const renderCommunityItem = ({ item }: { item: any }) => {
@@ -447,6 +459,7 @@ const SearchScreen: React.FC = () => {
   return (
     <SafeAreaView style={{ height: page_height, backgroundColor: "black" }}>
       <View style={{ ...styles.container, height: page_height }}>
+
         <TextInput
           placeholder="Search"
           placeholderTextColor="#ccc"
@@ -570,6 +583,40 @@ const SearchScreen: React.FC = () => {
             }
           />
         )}
+
+        {/* Integrated Video Player */}
+        {isVideoPlayerActive && currentVideoData && (
+          <View style={styles.videoPlayerOverlay}>
+            <FlatList
+              data={currentVideoList}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item, index }) => (
+                <VideoPlayer
+                  isGlobalPlayer={false}
+                  key={`${item._id}-${index === currentVideoIndex}`}
+                  videoData={item}
+                  isActive={index === currentVideoIndex}
+                  showCommentsModal={showCommentsModal}
+                  setShowCommentsModal={setShowCommentsModal}
+                />
+              )}
+              style={{ flex: 1 }}
+              getItemLayout={(_, index) => ({
+                length: Dimensions.get("screen").height,
+                offset: Dimensions.get("screen").height * index,
+                index,
+              })}
+              initialScrollIndex={currentVideoIndex}
+              pagingEnabled
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
+              decelerationRate="fast"
+              showsVerticalScrollIndicator={false}
+              snapToInterval={Dimensions.get("screen").height}
+              snapToAlignment="start"
+            />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -577,21 +624,22 @@ const SearchScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   // Container and basic layout
-  container: {
-    backgroundColor: "#000",
-    paddingTop: 0,
-  },
-  searchInput: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    color: "#fff",
-    paddingHorizontal: 15,
-    paddingVertical: 6,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 25,
-    fontSize: 16,
-    fontFamily: "Poppins-Regular",
-  },
+container: {
+  backgroundColor: "#000",
+  paddingTop: Platform.OS === 'ios' ? -40 : 0  // Negative padding to reduce space
+},
+searchInput: {
+  backgroundColor: "rgba(255,255,255,0.1)",
+  color: "#fff",
+  paddingHorizontal: 15,
+  paddingVertical: 6,
+  marginHorizontal: 15,
+  marginBottom: 15,
+  marginTop: Platform.OS === 'ios' ? -35 : 0,  // Add this line
+  borderRadius: 25,
+  fontSize: 16,
+  fontFamily: "Poppins-Regular",
+},
 
   // Tab selection styles
   selectionTabContainer: {

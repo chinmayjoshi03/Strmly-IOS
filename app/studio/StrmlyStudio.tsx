@@ -9,7 +9,9 @@ import {
   Alert,
   RefreshControl,
   Dimensions,
-  Platform
+  Platform,
+  StyleSheet
+  
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -380,91 +382,122 @@ const StrmlyStudio = () => {
           {activeTab === "draft" ? (
             // Drafts List
             <>
-              {draftsLoading ? (
-                <View className="flex-1 items-center justify-center py-20">
-                  <ActivityIndicator size="large" color="#F1C40F" />
-                  <Text className="text-gray-400 mt-2">Loading drafts...</Text>
-                </View>
-              ) : draftsError ? (
-                <View className="flex-1 items-center justify-center py-20">
-                  <Text className="text-red-400 text-center mb-4">
-                    Error loading drafts: {draftsError}
+  {draftsLoading ? (
+    <View className="flex-1 items-center justify-center py-20">
+      <ActivityIndicator size="large" color="#F1C40F" />
+      <Text className="text-gray-400 mt-2">Loading drafts...</Text>
+    </View>
+  ) : draftsError ? (
+    <View className="flex-1 items-center justify-center py-20">
+      <Text className="text-red-400 text-center mb-4">
+        Error loading drafts: {draftsError}
+      </Text>
+      <TouchableOpacity
+        onPress={refetchDrafts}
+        className="bg-gray-600 px-4 py-2 rounded-lg"
+      >
+        <Text className="text-white">Retry</Text>
+      </TouchableOpacity>
+    </View>
+  ) : drafts.length === 0 ? (
+    <View className="flex-1 items-center justify-center py-20">
+      <Ionicons name="document-outline" size={48} color="#666" />
+      <Text className="text-gray-400 text-center mt-4">
+        No drafts yet
+      </Text>
+      <Text className="text-gray-500 text-center mt-2">
+        Upload a video to create your first draft
+      </Text>
+    </View>
+  ) : (
+    drafts.map((draft) => (
+      <TouchableOpacity
+        key={draft.id}
+        onPress={() => {
+          console.log("🎬 Opening draft for editing:", draft.id);
+          handleEditDraft(draft.id);
+        }}
+      >
+        {Platform.OS === 'ios' ? (
+          // iOS version
+          <View style={styles.container}>
+            <View style={styles.gradientContainer}>
+              <View style={styles.thumbnailContainer}>
+                {draft.thumbnail ? (
+                  <Image
+                    source={{ uri: draft.thumbnail }}
+                    style={styles.thumbnail}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Image
+                    source={require("../../assets/drafts-icon.png")}
+                    style={{ width: 50, height: 50 }}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
+              
+              <View style={styles.textContainer}>
+                <Text style={styles.title}>{draft.title}</Text>
+                <Text style={styles.date}>{draft.date}</Text>
+                {draft.description && (
+                  <Text style={styles.description} numberOfLines={1}>
+                    {draft.description}
                   </Text>
-                  <TouchableOpacity
-                    onPress={refetchDrafts}
-                    className="bg-gray-600 px-4 py-2 rounded-lg"
-                  >
-                    <Text className="text-white">Retry</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : drafts.length === 0 ? (
-                <View className="flex-1 items-center justify-center py-20">
-                  <Ionicons name="document-outline" size={48} color="#666" />
-                  <Text className="text-gray-400 text-center mt-4">
-                    No drafts yet
-                  </Text>
-                  <Text className="text-gray-500 text-center mt-2">
-                    Upload a video to create your first draft
-                  </Text>
-                </View>
+                )}
+              </View>
+            </View>
+          </View>
+        ) : (
+          // Android version
+          <LinearGradient
+            colors={["#000000", "#0a0a0a", "#1a1a1a"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            className="flex-row items-center rounded-lg p-3 mb-3"
+            style={{
+              shadowColor: "#ffffff",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 3,
+            }}
+          >
+            <View className="w-12 h-12 rounded-lg mr-3 overflow-hidden">
+              {draft.thumbnail ? (
+                <Image
+                  source={{ uri: draft.thumbnail }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
               ) : (
-                drafts.map((draft) => (
-                  <TouchableOpacity
-                    key={draft.id}
-                    onPress={() => {
-                      console.log("🎬 Opening draft for editing:", draft.id);
-                      handleEditDraft(draft.id);
-                    }}
-                  >
-                    <LinearGradient
-                      colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      className="flex-row items-center rounded-lg p-3 mb-3"
-                      style={{
-                        shadowColor: "#ffffff",
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 2,
-                        elevation: 3,
-                      }}
-                    >
-                      <View className="w-12 h-12 rounded-lg mr-3 overflow-hidden">
-                        {draft.thumbnail ? (
-                          <Image
-                            source={{ uri: draft.thumbnail }}
-                            className="w-full h-full"
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View className="w-full h-full items-center justify-center">
-                            <Image
-                              source={require("../../assets/drafts-icon.png")}
-                              style={{ width: 50, height: 50 }}
-                              resizeMode="contain"
-                            />
-                          </View>
-                        )}
-                      </View>
-
-                      <View className="flex-1">
-                        <Text className="text-white text-lg font-medium">
-                          {draft.title}
-                        </Text>
-                        <Text className="text-gray-400 text-base">
-                          {draft.date}
-                        </Text>
-                        {draft.description && (
-                          <Text
-                            className="text-gray-500 text-sm mt-1"
-                            numberOfLines={1}
-                          >
-                            {draft.description}
-                          </Text>
-                        )}
-                      </View>
-
-                      <DropdownMenu
+                <View className="w-full h-full items-center justify-center">
+                  <Image
+                    source={require("../../assets/drafts-icon.png")}
+                    style={{ width: 50, height: 50 }}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+            </View>
+            <View style={{flex: 1}}>
+              <Text className="text-white text-lg font-medium">
+                {draft.title}
+              </Text>
+              <Text className="text-gray-400 text-base">
+                {draft.date}
+              </Text>
+              {draft.description && (
+                <Text
+                  className="text-gray-500 text-sm mt-1"
+                  numberOfLines={1}
+                >
+                  {draft.description}
+                </Text>
+              )}
+            </View>
+            <DropdownMenu
                         options={[
                           {
                             id: "delete",
@@ -476,159 +509,231 @@ const StrmlyStudio = () => {
                           },
                         ]}
                       />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ))
-              )}
-            </>
+          </LinearGradient>
+        )}
+      </TouchableOpacity>
+    ))
+  )}
+</>
           ) : (
             // Series List
-            <>
-              {seriesLoading ? (
-                <View className="flex-1 items-center justify-center py-20">
-                  <ActivityIndicator size="large" color="#F1C40F" />
-                  <Text className="text-gray-400 mt-2">Loading series...</Text>
-                </View>
-              ) : seriesError ? (
-                <View className="flex-1 items-center justify-center py-20">
-                  <Text className="text-red-400 text-center mb-4">
-                    Error loading series: {seriesError}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={refetchSeries}
-                    className="bg-gray-600 px-4 py-2 rounded-lg"
-                  >
-                    <Text className="text-white">Retry</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : series.length === 0 ? (
-                <View className="flex-1 items-center justify-center py-20">
-                  <Svg width={48} height={48} viewBox="0 0 41 40" fill="none">
-                    <Path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M28.1193 31.4285V20C28.1193 18.9896 27.718 18.0206 27.0035 17.3062C26.2891 16.5918 25.3202 16.1904 24.3098 16.1904H7.16695C6.1566 16.1904 5.18763 16.5918 4.47321 17.3062C3.75878 18.0206 3.35742 18.9896 3.35742 20V31.4285C3.35742 32.4389 3.75878 33.4078 4.47321 34.1223C5.18763 34.8367 6.1566 35.238 7.16695 35.238H24.3098C25.3202 35.238 26.2891 34.8367 27.0035 34.1223C27.718 33.4078 28.1193 32.4389 28.1193 31.4285Z"
-                      stroke="#666"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                    <Path
-                      d="M31.9284 31.4285V18.1047C31.9284 16.5891 31.3264 15.1357 30.2548 14.0641C29.1831 12.9924 27.7297 12.3904 26.2141 12.3904H26.2046L9.07129 12.4209"
-                      stroke="#666"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                    <Path
-                      d="M35.738 27.619V16.2038C35.738 14.1831 34.9353 12.2451 33.5064 10.8163C32.0776 9.38744 30.1397 8.58472 28.119 8.58472H28.1056L12.8809 8.60948"
-                      stroke="#666"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                  </Svg>
-                  <Text className="text-gray-400 text-center mt-4">
-                    No series yet
-                  </Text>
-                  <Text className="text-gray-500 text-center mt-2">
-                    Create your first series to get started
-                  </Text>
-                </View>
+         <>
+  {seriesLoading ? (
+    <View className="flex-1 items-center justify-center py-20">
+      <ActivityIndicator size="large" color="#F1C40F" />
+      <Text className="text-gray-400 mt-2">Loading series...</Text>
+    </View>
+  ) : seriesError ? (
+    <View className="flex-1 items-center justify-center py-20">
+      <Text className="text-red-400 text-center mb-4">
+        Error loading series: {seriesError}
+      </Text>
+      <TouchableOpacity
+        onPress={refetchSeries}
+        className="bg-gray-600 px-4 py-2 rounded-lg"
+      >
+        <Text className="text-white">Retry</Text>
+      </TouchableOpacity>
+    </View>
+  ) : series.length === 0 ? (
+    <View className="flex-1 items-center justify-center py-20">
+      <Svg width={48} height={48} viewBox="0 0 41 40" fill="none">
+        <Path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M28.1193 31.4285V20C28.1193 18.9896 27.718 18.0206 27.0035 17.3062C26.2891 16.5918 25.3202 16.1904 24.3098 16.1904H7.16695C6.1566 16.1904 5.18763 16.5918 4.47321 17.3062C3.75878 18.0206 3.35742 18.9896 3.35742 20V31.4285C3.35742 32.4389 3.75878 33.4078 4.47321 34.1223C5.18763 34.8367 6.1566 35.238 7.16695 35.238H24.3098C25.3202 35.238 26.2891 34.8367 27.0035 34.1223C27.718 33.4078 28.1193 32.4389 28.1193 31.4285Z"
+          stroke="#666"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <Path
+          d="M31.9284 31.4285V18.1047C31.9284 16.5891 31.3264 15.1357 30.2548 14.0641C29.1831 12.9924 27.7297 12.3904 26.2141 12.3904H26.2046L9.07129 12.4209"
+          stroke="#666"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <Path
+          d="M35.738 27.619V16.2038C35.738 14.1831 34.9353 12.2451 33.5064 10.8163C32.0776 9.38744 30.1397 8.58472 28.119 8.58472H28.1056L12.8809 8.60948"
+          stroke="#666"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </Svg>
+      <Text className="text-gray-400 text-center mt-4">
+        No series yet
+      </Text>
+      <Text className="text-gray-500 text-center mt-2">
+        Create your first series to get started
+      </Text>
+    </View>
+  ) : (
+    <View key={refreshKey}>
+      {/* Show a subtle loading indicator when refreshing */}
+      {isRefreshing && (
+        <View className="flex-row items-center justify-center py-2 mb-2">
+          <ActivityIndicator size="small" color="#F1C40F" />
+          <Text className="text-gray-400 ml-2 text-sm">
+            Updating...
+          </Text>
+        </View>
+      )}
+      {series.map((seriesItem) => (
+        <TouchableOpacity
+          key={seriesItem.id}
+          onPress={() => goToSeriesDetails(seriesItem.id)}
+          activeOpacity={0.7}
+          style={{ marginVertical: 8 }}
+        >
+          {Platform.OS === 'ios' ? (
+            // iOS version
+            <View style={[
+              styles.gradientContainer,
+              selectedSeries === seriesItem.id && styles.selectedContainer
+            ]}>
+              {/* Thumbnail */}
+              {seriesItem.thumbnail ? (
+                <Image
+                  source={{ uri: seriesItem.thumbnail }}
+                  style={styles.thumbnail}
+                  resizeMode="cover"
+                />
               ) : (
-                <View key={refreshKey}>
-                  {/* Show a subtle loading indicator when refreshing */}
-                  {isRefreshing && (
-                    <View className="flex-row items-center justify-center py-2 mb-2">
-                      <ActivityIndicator size="small" color="#F1C40F" />
-                      <Text className="text-gray-400 ml-2 text-sm">
-                        Updating...
-                      </Text>
-                    </View>
-                  )}
-                {series.map((seriesItem) => (
-                  <TouchableOpacity
-                    key={seriesItem.id}
-                    onPress={() => goToSeriesDetails(seriesItem.id)}
-                  >
-                    <LinearGradient
-                      colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      className={`flex-row items-center rounded-lg ${Platform.OS === 'android' ? 'p-3' : 'p-1'} mb-3 ${
-                        selectedSeries === seriesItem.id
-                          ? "border-2 border-blue-500"
-                          : ""
-                      }`}
-                      style={{
-                        shadowColor: "#ffffff",
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 2,
-                        elevation: 3,
-                      }}
-                    >
-                      <View className={`${Platform.OS === 'android' ? 'w-10 h-10 mr-2' : 'w-12 h-12 mr-3'} items-center justify-center`}>
-                        {seriesItem.thumbnail ? (
-                          <Image
-                            source={{ uri: seriesItem.thumbnail }}
-                            className="w-full h-full rounded"
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <Image
-                            source={require("../../assets/episode.png")}
-                            style={Platform.OS === 'android' ? { width: 28, height: 28 } : { width: 32, height: 32 }}
-                            resizeMode="contain"
-                          />
-                        )}
-                      </View>
-
-                      <View className="flex-1">
-                        <Text
-                          className={`text-white ${Platform.OS === 'android' ? 'text-base' : 'text-lg'} font-medium`}
-                          numberOfLines={1}
-                        >
-                          {seriesItem.title}
-                        </Text>
-                        <Text className={`text-gray-400 ${Platform.OS === 'android' ? 'text-sm' : 'text-base'}`}>
-                          {seriesItem.date}
-                        </Text>
-                        <Text className={`text-gray-500 ${Platform.OS === 'android' ? 'text-xs' : 'text-sm'}`}>
-                          {seriesItem.genre} • {seriesItem.type}
-                        </Text>
-                      </View>
-
-                      <View className={`items-end ${Platform.OS === 'android' ? 'mr-2' : 'mr-3'}`}>
-                        <Text className={`text-gray-400 ${Platform.OS === 'android' ? 'text-xs' : 'text-sm'}`}>
-                          Total Episode
-                        </Text>
-                        <Text className={`text-white ${Platform.OS === 'android' ? 'text-sm' : 'text-base'} font-medium`}>
-                          {seriesItem.episodes.toString().padStart(2, "0")}
-                        </Text>
-                      </View>
-
-                      <DropdownMenu
-                        options={[
-                          {
-                            id: "delete",
-                            label: "Delete",
-                            icon: "trash-outline",
-                            color: "#EF4444",
-                            onPress: () =>
-                              handleDeleteSeries(
-                                seriesItem.id,
-                                seriesItem.title
-                              ),
-                          },
-                        ]}
-                      />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ))}
-                </View>
+                <Image
+                  source={require("../../assets/episode.png")}
+                  style={styles.iosPlaceholder}
+                  resizeMode="contain"
+                />
               )}
-            </>
+
+              {/* Series Info */}
+              <View style={styles.infoContainer}>
+                <Text
+                  style={styles.iosTitle}
+                  numberOfLines={1}
+                >
+                  {seriesItem.title}
+                </Text>
+                <Text style={styles.iosDate}>
+                  {seriesItem.date}
+                </Text>
+                <Text style={styles.iosGenre}>
+                  {seriesItem.genre} • {seriesItem.type}
+                </Text>
+              </View>
+
+              {/* Episode Count */}
+              <View style={styles.iosEpisodeContainer}>
+                <Text style={styles.iosEpisodeLabel}>
+                  Total Episode
+                </Text>
+                <Text style={styles.iosEpisodeCount}>
+                  {seriesItem.episodes.toString().padStart(2, "0")}
+                </Text>
+              </View>
+
+              {/* Dropdown Menu */}
+              <View style={styles.dropdownContainer}>
+                <DropdownMenu
+                  options={[
+                    {
+                      id: "delete",
+                      label: "Delete",
+                      icon: "trash-outline",
+                      color: "#EF4444",
+                      onPress: () =>
+                        handleDeleteSeries(
+                          seriesItem.id,
+                          seriesItem.title
+                        ),
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          ) : (
+            // Android version
+            <LinearGradient
+              colors={["#000000", "#0a0a0a", "#1a1a1a"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              className={`flex-row items-center rounded-lg p-3 mb-3 ${
+                selectedSeries === seriesItem.id
+                  ? "border-2 border-blue-500"
+                  : ""
+              }`}
+              style={{
+                shadowColor: "#ffffff",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 3,
+              }}
+            >
+              <View className="w-10 h-10 mr-2 items-center justify-center">
+                {seriesItem.thumbnail ? (
+                  <Image
+                    source={{ uri: seriesItem.thumbnail }}
+                    className="w-full h-full rounded"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Image
+                    source={require("../../assets/episode.png")}
+                    style={{ width: 28, height: 28 }}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
+
+              <View className="flex-1">
+                <Text
+                  className="text-white text-base font-medium"
+                  numberOfLines={1}
+                >
+                  {seriesItem.title}
+                </Text>
+                <Text className="text-gray-400 text-sm">
+                  {seriesItem.date}
+                </Text>
+                <Text className="text-gray-500 text-xs">
+                  {seriesItem.genre} • {seriesItem.type}
+                </Text>
+              </View>
+
+              <View className="items-end mr-2">
+                <Text className="text-gray-400 text-xs">
+                  Total Episode
+                </Text>
+                <Text className="text-white text-sm font-medium">
+                  {seriesItem.episodes.toString().padStart(2, "0")}
+                </Text>
+              </View>
+
+              <DropdownMenu
+                options={[
+                  {
+                    id: "delete",
+                    label: "Delete",
+                    icon: "trash-outline",
+                    color: "#EF4444",
+                    onPress: () =>
+                      handleDeleteSeries(
+                        seriesItem.id,
+                        seriesItem.title
+                      ),
+                  },
+                ]}
+              />
+            </LinearGradient>
+          )}
+        </TouchableOpacity>
+      ))}
+    </View>
+  )}
+</>
           )}
         </ScrollView>
 
@@ -656,4 +761,174 @@ const StrmlyStudio = () => {
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#1a1a1a',
+    // Shadow for iOS
+    shadowColor: "#ffffff",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Shadow for Android
+    elevation: 3,
+  },
+  gradientContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'linear-gradient(90deg, #000000,rgb(0, 0, 0),rgb(11, 11, 11))',
+  },
+  thumbnailContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 16,
+    overflow: 'hidden',
+    backgroundColor: '#333',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#444',
+  },
+  placeholderIcon: {
+    width: 30,
+    height: 30,
+    backgroundColor: '#666',
+    borderRadius: 6,
+  },
+  textContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  title: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  date: {
+    color: '#aaa',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  description: {
+    color: '#888',
+    fontSize: 14,
+  },
+
+
+  selectedContainer: {
+    borderWidth: 2,
+    borderColor: '#3b82f6',
+  },
+  
+  androidThumbnail: {
+    width: 40,
+    height: 40,
+    marginRight: 8,
+  },
+  iosThumbnail: {
+    width: 48,
+    height: 48,
+    marginRight: 12,
+  },
+  
+  
+  androidPlaceholder: {
+    width: 28,
+    height: 28,
+  },
+  iosPlaceholder: {
+    width: 32,
+    height: 32,
+  },
+  infoContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  
+  androidTitle: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '500',
+  },
+  iosTitle: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  androidDate: {
+    fontSize: 14,
+    color: '#9ca3af',
+  },
+  iosDate: {
+    fontSize: 16,
+    color: '#9ca3af',
+    marginBottom: 4,
+  },
+  genre: {
+    color: '#6b7280',
+  },
+  androidGenre: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  iosGenre: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  episodeContainer: {
+    alignItems: 'flex-end',
+  },
+  androidEpisodeContainer: {
+    marginRight: 8,
+  },
+  iosEpisodeContainer: {
+    marginRight: 12,
+  },
+  episodeLabel: {
+    color: '#9ca3af',
+  },
+  androidEpisodeLabel: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  iosEpisodeLabel: {
+    fontSize: 14,
+    color: '#9ca3af',
+  },
+  episodeCount: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  androidEpisodeCount: {
+    fontSize: 14,
+    color: 'white',
+    fontWeight: '500',
+  },
+  iosEpisodeCount: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '600',
+  },
+  dropdownContainer: {
+    justifyContent: 'center',
+  },
+
+});
+
 export default StrmlyStudio;
+
+

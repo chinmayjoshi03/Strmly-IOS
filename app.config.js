@@ -25,6 +25,12 @@ export default {
       softwareKeyboardLayoutMode: "pan",
       edgeToEdgeEnabled: true
     },
+    ios: {
+        bundleIdentifier: "com.anonymous.strmly",
+        infoPlist: {
+        ITSAppUsesNonExemptEncryption: false
+      }
+    },
     web: {
       bundler: "metro",
       output: "static",
@@ -32,6 +38,7 @@ export default {
     },
     plugins: [
       "expo-router",
+      "expo-secure-store",
       [
         "expo-splash-screen",
         {

@@ -20,7 +20,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Constants from "expo-constants";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const {height} = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 export default function PublicCommunityPage() {
   const [activeTab, setActiveTab] = useState("long");
@@ -214,7 +214,7 @@ export default function PublicCommunityPage() {
   );
 
   return (
-    <ThemedView style={{height}}>
+    <ThemedView style={{ height }}>
       <SafeAreaView>
         {/* Cover Image */}
         {!isLoading && (
@@ -299,30 +299,18 @@ export default function PublicCommunityPage() {
               </TouchableOpacity>
 
               {communityData?.community_fee_type !== "free" && (
-                <TouchableOpacity className="rounded-xl overflow-hidden">
-                  <LinearGradient
-                    colors={["#4400FFA6", "#FFFFFF", "#FF00004D", "#FFFFFF"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    className="p-[1px] rounded-xl flex-1"
-                  >
-                    <View className="flex-1 px-4 py-2 rounded-xl bg-black items-center justify-center">
-                      {communityData?.community_fee_type === "free" ? (
-                        <Text className="text-white text-center">Free</Text>
-                      ) : (
-                        <View className="flex-row items-center justify-center">
-                          <Text className="text-white">Join at</Text>
-                          <Text>
-                            <IndianRupee color={"white"} size={13} />
-                          </Text>
-                          <Text className="text-white text-center">
-                            {communityData?.community_fee_amount}
-                            /month
-                          </Text>
-                        </View>
-                      )}
+                <TouchableOpacity className="flex-1 px-4 py-2 rounded-xl bg-transparent border border-white">
+                  {communityData?.community_fee_type === "free" ? (
+                    <Text className="text-white text-center">Free</Text>
+                  ) : (
+                    <View className="flex-row items-center justify-center">
+                      <Text className="text-white">Join at </Text>
+                      <IndianRupee color={"white"} size={13} />
+                      <Text className="text-white text-center">
+                        {communityData?.community_fee_amount}/month
+                      </Text>
                     </View>
-                  </LinearGradient>
+                  )}
                 </TouchableOpacity>
               )}
             </View>

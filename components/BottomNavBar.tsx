@@ -77,11 +77,11 @@ export default function BottomNavBar({ activeTab }: BottomNavBarProps) {
         left: 0,
         right: 0,
         backgroundColor: '#000000',
-        height: 50,
+        height: 50 + insets.bottom,
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingBottom: 0,
+        paddingBottom: insets.bottom,
         borderTopWidth: 0,
         elevation: 8, // Android shadow
         shadowColor: '#000', // iOS shadow

@@ -62,10 +62,8 @@ export default function TabLayout() {
           ? { display: "none" } // hide in landscape
           : {
               backgroundColor: "#000000",
-              borderWidth: 0.5,
-              borderColor: 'gray',
               borderTopWidth: 0,
-              height: 40,
+              height: 50,
               paddingBottom: 0,
               paddingTop: 0,
               paddingHorizontal: 0,

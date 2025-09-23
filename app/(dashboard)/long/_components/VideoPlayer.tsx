@@ -26,6 +26,7 @@ import VideoBuyMessage from "./VideoBuyMessage";
 import { useIsFocused } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
 
+
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useOrientationStore } from "@/store/useOrientationStore";
 import VideoProgressBar from "./VideoProgressBar";
@@ -77,6 +78,10 @@ const VideoPlayer = ({
 
     isPurchasedCommunityPass,
 
+
+
+
+
   } = useGiftingStore();
 
   // Paid video states
@@ -84,6 +89,7 @@ const VideoPlayer = ({
   const [checkCreatorPass, setCheckCreatorPass] = useState(false);
   const [haveAccess, setHaveAccess] = useState(false);
   const [accessVersion, setAccessVersion] = useState(0);
+
 
   const { user } = useAuthStore();
 
@@ -103,16 +109,6 @@ const VideoPlayer = ({
   // ✅ NEW: Track if this is the first time becoming active for this video
   const [hasBeenActiveBefore, setHasBeenActiveBefore] = useState(false);
 
-  const insets = useSafeAreaInsets();
-  const bottomOffset =
-    screenHeight < 700
-      ? insets.bottom != 0
-        ? insets.bottom - 16
-        : 45
-      : insets.bottom != 0
-        ? insets.bottom - 16
-        : 28;
-
   // Local stats
   const [localStats, setLocalStats] = useState({
     likes: videoData.likes || 0,
@@ -128,11 +124,14 @@ const VideoPlayer = ({
   const statusListenerRef = useRef<any>(null);
   const timeListenerRef = useRef<any>(null);
   const playerRef = useRef<any>(null);
+
   const hasShownAccessModal = useRef(false);
   const modalDismissed = useRef(false);
 
   const VIDEO_HEIGHT = containerHeight || screenHeight;
   const isFocused = useIsFocused();
+
+
 
 
 
@@ -234,21 +233,7 @@ const VideoPlayer = ({
     };
   }, []);
 
-  // Update stats when videoData changes
-  useEffect(() => {
-    setLocalStats({
-      likes: videoData.likes || 0,
-      gifts: videoData.gifts || 0,
-      shares: videoData.shares || 0,
-      comments: videoData.comments?.length || 0,
-    });
-  }, [
-    videoData._id,
-    videoData.likes,
-    videoData.gifts,
-    videoData.shares,
-    videoData.comments?.length,
-  ]);
+
 
   // Set Access and Creator pass state of user when data comes
   useEffect(() => {
@@ -312,7 +297,7 @@ const VideoPlayer = ({
       fetchVideoDataAccess
     ) {
       // Check all forms of access
-      const hasAnyAccess = haveCreator || haveAccess || isVideoPurchased || isPurchasedSeries || isPurchasedPass || isPurchasedCommunityPass;
+      const hasAnyAccess = haveCreator || haveAccess || videoData.access.isPurchased || isVideoPurchased || isPurchasedSeries || isPurchasedPass || isPurchasedCommunityPass;
 
       if (!hasAnyAccess) {
         console.log('No access found, allowing free portion play');
@@ -445,9 +430,6 @@ const VideoPlayer = ({
       // If hasBeenActiveBefore is true, don't reset - let the user's seek position remain
     }
   }, [isActive, player, videoData._id, videoData?.access?.freeRange?.start_time, hasBeenActiveBefore]);
-
-  // ✅ REMOVED: Old initial seek logic - now handled by VideoProgressBar
-  // The old useEffect for seeking to start time is removed since VideoProgressBar handles it
 
   // Handle gifting pause
   useEffect(() => {
@@ -732,10 +714,10 @@ const VideoPlayer = ({
             !isGlobalPlayer
               ? isLandscape
                 ? { bottom: "20%" }
-                : { bottom: bottomOffset }
+                : { bottom: "4.8%" }
               : isLandscape
                 ? { bottom: "20%" }
-                : { bottom: screenHeight > 700 ? -5 : 5 }
+                : { bottom: 10 }
           }
         >
           {/* ✅ UPDATED: Pass onInitialSeekComplete callback */}
@@ -745,11 +727,10 @@ const VideoPlayer = ({
             videoId={videoData._id}
             duration={videoData.duration || 0}
             access={videoData.access}
-            showBuyOption={setShowBuyOption}
-            hasCreatorPassOfVideoOwner={videoData.hasCreatorPassOfVideoOwner}
             onInitialSeekComplete={handleInitialSeekComplete}
             isVideoOwner={videoData.created_by._id === user?.id}
             hasAccess={haveAccess || haveCreator || videoData.access.isPurchased}
+            isGlobalPlayer={isGlobalPlayer}
             accessVersion={accessVersion}
           />
         </View>

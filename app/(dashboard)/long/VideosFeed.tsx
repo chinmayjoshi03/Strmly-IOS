@@ -6,7 +6,10 @@ import {
   Text,
   Pressable,
   View,
-  PanResponder,
+  StatusBar,
+  RefreshControl,
+  Platform,
+  PanResponder
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import ThemedView from "@/components/ThemedView";
@@ -18,7 +21,6 @@ import VideoPlayer from "./_components/VideoPlayer";
 import { clearActivePlayer } from "@/store/usePlayerStore";
 import { useVideosStore } from "@/store/useVideosStore";
 import { useOrientationStore } from "@/store/useOrientationStore";
-import { RefreshControl } from "react-native-gesture-handler";
 
 export type GiftType = {
   creator: {
@@ -30,10 +32,8 @@ export type GiftType = {
 };
 
 const { height: screenHeight } = Dimensions.get("window");
-const BOTTOM_NAV_HEIGHT = -50; // Height of your bottom navigation
-
-// Define the height for each video item (adjust as needed)
-const VIDEO_HEIGHT = screenHeight;
+const BOTTOM_NAV_HEIGHT = 50;
+const VIDEO_HEIGHT = Platform.OS == 'ios' ? screenHeight - 62 : screenHeight - 49;
 
 const VideosFeed: React.FC = () => {
   const [videos, setVideos] = useState<VideoItemType[]>([]);
@@ -44,10 +44,12 @@ const VideosFeed: React.FC = () => {
   const [limit, setLimit] = useState(6);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+
 
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   const { token, isLoggedIn } = useAuthStore();
   const { setVideoType } = useVideosStore();
@@ -74,11 +76,11 @@ const VideosFeed: React.FC = () => {
         }
         console.log("token: ", token);
 
-        // Re-initialize if videos are empty and we should have data
-        if (videos.length === 0 && !loading && !error) {
+        if (videos.length === 0 && !loading && !error && !isFetchingMore && !hasAttemptedFetch && !refreshing) {
           setLoading(true);
           setPage(1);
           setHasMore(true);
+          setHasAttemptedFetch(true);
           fetchTrendingVideos(1);
         }
       }, 100);
@@ -147,9 +149,13 @@ const VideosFeed: React.FC = () => {
         setHasMore(false);
       }
 
-      console.log(
-        `Loaded ${json.data?.length || 0} videos for page ${targetPage} and hasMore ${hasMore}`
-      );
+      // If first page is empty, definitely no more pages
+      if (targetPage === 1 && (!json.data || json.data.length === 0)) {
+        console.log("First page empty, no more pages");
+        setHasMore(false);
+      }
+
+      console.log(`Loaded ${json.data?.length || 0} videos for page ${targetPage}`);
 
       // Only increment page if we're not refreshing (targetPage === 1)
       if (targetPage !== 1) {
@@ -165,8 +171,8 @@ const VideosFeed: React.FC = () => {
       }
     } finally {
       if (mountedRef.current) {
-        setIsFetchingMore(false);
         setLoading(false);
+        setIsFetchingMore(false);
       }
     }
   };
@@ -174,6 +180,8 @@ const VideosFeed: React.FC = () => {
   // Initial load
   useEffect(() => {
     if (token && isLoggedIn) {
+      setLoading(true);
+      setHasAttemptedFetch(true);
       fetchTrendingVideos(1);
     } else if (!token || !isLoggedIn) {
       setError("Please log in to view videos");
@@ -291,17 +299,20 @@ const VideosFeed: React.FC = () => {
   );
 
   // Handle refresh
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     setPage(1);
     setRefreshing(true);
     setHasMore(true);
     setVisibleIndex(0);
+    setHasAttemptedFetch(true); // Keep this true to prevent useFocusEffect from triggering
 
-    fetchTrendingVideos(1).finally(() => {
+    try {
+      await fetchTrendingVideos(1);
+    } finally {
       setRefreshing(false);
-    });
+    }
   }, []);
 
   // Stable key extractor
@@ -311,9 +322,13 @@ const VideosFeed: React.FC = () => {
   );
 
   // Show loading while checking authentication or fetching videos
-  if (loading && isFetchingMore) {
+  if (loading && !refreshing && videos.length === 0) {
+    console.log('VideosFeed: Showing loading screen', { loading, refreshing, videosLength: videos.length, hasAttemptedFetch, error });
     return (
-      <ThemedView style={{ flex: 1 }} className="justify-center items-center">
+      <ThemedView
+        style={{ flex: 1 }}
+        className="justify-center items-center"
+      >
         <ActivityIndicator size="large" color="white" />
         <Text className="text-white mt-4">
           {!token || !isLoggedIn
@@ -326,31 +341,31 @@ const VideosFeed: React.FC = () => {
 
   if (error && videos.length === 0) {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1 }} edges={["bottom"]}>
-          <ThemedView
-            style={{ flex: 1 }}
-            className="justify-center items-center px-4"
-          >
-            <Text className="text-white text-center mb-4">
-              Oops something went wrong!
-            </Text>
-            <Pressable
-              onPress={handleRefresh}
-              className="bg-blue-600 px-4 py-2 rounded"
-            >
-              <Text className="text-white">Retry</Text>
-            </Pressable>
-          </ThemedView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+      <ThemedView
+        style={{ flex: 1 }}
+        className="justify-center items-center px-4"
+      >
+        <Text className="text-white text-center mb-4">
+          Oops something went wrong!
+        </Text>
+        <Pressable
+          onPress={handleRefresh}
+          className="bg-blue-600 px-4 py-2 rounded"
+        >
+          <Text className="text-white">Retry</Text>
+        </Pressable>
+      </ThemedView>
     );
   }
 
   if (videos.length === 0) {
+    console.log('VideosFeed: Showing no videos message', { loading, refreshing, videosLength: videos.length, hasAttemptedFetch, error });
     return (
-      <ThemedView style={{ flex: 1 }} className="justify-center items-center">
-        <Text className="text-lg text-white">You watched all videos, no new videos Available.</Text>
+      <ThemedView
+        style={{ flex: 1 }}
+        className="justify-center items-center"
+      >
+        <Text className="text-lg text-white">No Videos Available</Text>
         <Text className="text-lg text-white">
           Want to Upload your own{" "}
           <Link href={"/studio"} className="text-blue-500">
@@ -369,58 +384,56 @@ const VideosFeed: React.FC = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "black" }} edges={[]}>
-      <ThemedView style={{ flex: 1 }} {...panResponder.panHandlers}>
-        <FlatList
-          ref={flatListRef}
-          data={videos}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          getItemLayout={getItemLayout}
-          pagingEnabled
-          scrollEnabled={!showCommentsModal && !isLandscape}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
-          initialNumToRender={1}
-          maxToRenderPerBatch={1}
-          windowSize={1}
-          removeClippedSubviews={true}
-          showsVerticalScrollIndicator={false}
-          contentInsetAdjustmentBehavior="automatic"
-          onEndReachedThreshold={0.8}
-          onEndReached={() => {
-            if (hasMore && !isFetchingMore && isScreenFocused) {
-              fetchTrendingVideos();
-            }
-          }}
-          style={{ height: VIDEO_HEIGHT }}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-            autoscrollToTopThreshold: 10,
-          }}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          // Add loading indicator at the bottom
-          ListFooterComponent={
-            isFetchingMore ? (
-              <View style={{ padding: 20, alignItems: "center" }}>
-                <ActivityIndicator size="small" color="white" />
-              </View>
-            ) : null
-          }
-          // incoming changes
-          snapToInterval={VIDEO_HEIGHT}
-          snapToAlignment="start"
-          decelerationRate="normal"
-          bounces={true} // Disable bouncing to prevent content bleeding
-          scrollEventThrottle={16}
-          disableIntervalMomentum={true} // Prevent momentum scrolling past snap points
-          onScrollEndDrag={onScrollEndDrag}
-          onMomentumScrollEnd={onMomentumScrollEnd}
-          contentContainerStyle={{ backgroundColor: "#000" }}
-          overScrollMode="never" // Android: prevent over-scrolling
-          alwaysBounceVertical={false} // iOS: prevent bouncing
-        />
-      </ThemedView>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+
+      <FlatList
+        ref={flatListRef}
+        data={videos}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
+        pagingEnabled={true}
+        scrollEnabled={!showCommentsModal && !isLandscape}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        initialNumToRender={1}
+        maxToRenderPerBatch={1}
+        windowSize={3}
+        removeClippedSubviews={true}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={VIDEO_HEIGHT}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        bounces={false}
+        scrollEventThrottle={16}
+        disableIntervalMomentum={true}
+        onScrollEndDrag={onScrollEndDrag}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        style={{ flex: 1, backgroundColor: '#000' }}
+        contentContainerStyle={{ backgroundColor: '#000' }}
+        overScrollMode="never"
+        alwaysBounceVertical={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="white"
+            colors={["white"]}
+            progressBackgroundColor="#1a1a1a"
+            titleColor="white"
+            title="Pull to refresh"
+            progressViewOffset={0}
+          />
+        }
+        ListFooterComponent={
+          isFetchingMore ? (
+            <View style={{ height: VIDEO_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+              <ActivityIndicator size="small" color="white" />
+              <Text className="text-white mt-2">Loading more videos...</Text>
+            </View>
+          ) : null
+        }
+      />
     </SafeAreaView>
   );
 };

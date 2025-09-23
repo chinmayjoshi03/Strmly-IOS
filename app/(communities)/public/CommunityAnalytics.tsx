@@ -5,7 +5,8 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
-    Image
+    Image,
+    Platform
 } from 'react-native';
 import { ChevronLeft, ChevronDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -264,7 +265,9 @@ const CommunityAnalytics = () => {
     return (
         <View className="flex-1 bg-black">
             {/* Header */}
-            <View className="flex-row items-center justify-between px-4 py-3 mt-12">
+            <View className="flex-row items-center justify-between px-4 py-3"
+            style={{paddingTop : -10}}
+            >
                 <TouchableOpacity onPress={() => router.back()}>
                     <ChevronLeft size={24} color="white" />
                 </TouchableOpacity>
@@ -313,7 +316,9 @@ const CommunityAnalytics = () => {
                             }}
                         >
                             {/* Time Filter */}
-                            <View className="flex-row justify-between items-center mb-4">
+                            <View className="flex-row justify-between items-center mb-4"
+                            style={{paddingRight: Platform.OS == "ios" ? 2 : 0}}
+                            >
                                 <Text className="text-white text-lg font-medium" style={{ fontFamily: 'Inter' }}>
                                     {activeTab === 'revenue' ? 'Community fee' : 'Total creators'}
                                 </Text>
@@ -354,7 +359,7 @@ const CommunityAnalytics = () => {
 
                             {/* Stats Content */}
                             {activeTab === 'non-revenue' ? (
-                                <View className="space-y-2">
+                                <View className="space-y-2 px-2">
                                     <View className="flex-row justify-between items-center">
                                         <Text className="text-gray-400 text-base" style={{ fontFamily: 'Inter' }}>Total Videos</Text>
                                         <Text className="text-white text-base" style={{ fontFamily: 'Inter' }}>{stats ? formatNumber(stats.totalVideos || 0) : '0'}</Text>

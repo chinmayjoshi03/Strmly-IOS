@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Pressable,
-  StyleSheet,
-  ActivityIndicator,
-  Dimensions,
-} from "react-native";
+import { View, Pressable, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
 import { PlayIcon, PauseIcon } from "lucide-react-native";
 import { usePlayerStore } from "@/store/usePlayerStore";
 import InteractOptions from "./interactOptions";
@@ -16,7 +10,7 @@ import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVideosStore } from "@/store/useVideosStore";
 import { useOrientationStore } from "@/store/useOrientationStore";
-import VideoProgressBar from "./VideoProgressBar";
+
 
 type Props = {
   haveCreator: React.Dispatch<React.SetStateAction<boolean>>;
@@ -28,7 +22,6 @@ type Props = {
   showBuyOption: boolean;
   setShowBuyOption: React.Dispatch<React.SetStateAction<boolean>>;
   player: VideoPlayer;
-  isActive: boolean;
   videoData: VideoItemType;
   isGlobalPlayer: boolean;
   setShowCommentsModal?: (visible: boolean) => void;
@@ -55,7 +48,6 @@ const VideoControls = ({
   setShowBuyOption,
   showWallet,
   player,
-  isActive,
   videoData,
   isGlobalPlayer,
   setShowCommentsModal,
@@ -68,10 +60,11 @@ const VideoControls = ({
   const [buffering, setBuffering] = useState(false);
   const [wantToBuyVideo, setWantToBuyVideo] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const insets = useSafeAreaInsets();
   const { setVideosInZustand } = useVideosStore();
   const { isLandscape } = useOrientationStore();
   let hideTimer = React.useRef<NodeJS.Timeout | number | null>(null);
-  const insets = useSafeAreaInsets();
+
   // const scaledOffset = PixelRatio.getPixelSizeForLayoutSize(12);
   const screenHeight = Dimensions.get("window").height;
   const bottomOffset =
@@ -152,7 +145,7 @@ const VideoControls = ({
       if (typeof (player as any).currentTime === "number") {
         // no-op, but ensures player object is ready
       }
-    } catch {}
+    } catch { }
 
     return () => {
       subStatus?.remove?.();
@@ -178,13 +171,25 @@ const VideoControls = ({
         setPlaying(true);
       }
       setShowPlayPauseIcon(true);
-
-      // every tap resets hide timer in landscape
-      if (isLandscape) {
-        resetHideTimer();
-      }
     } catch (e) {
       console.error("play/pause error:", e);
+    }
+  };
+
+  const handleScreenTap = () => {
+    if (isLandscape) {
+      if (showControls) {
+        // If controls are visible, toggle play/pause and reset timer
+        handleTogglePlayPause();
+      } else {
+        // If controls are hidden, just show them
+        resetHideTimer();
+      }
+    } else {
+      // In portrait mode, always toggle play/pause
+      if (haveCreatorPass || haveAccessPass || videoData.amount === 0) {
+        handleTogglePlayPause();
+      }
     }
   };
 
@@ -217,6 +222,7 @@ const VideoControls = ({
               : isLandscape
                 ? styles.interactFullScreen
                 : styles.interact,
+            { paddingBottom: insets.bottom },
           ]}
         >
           <InteractOptions
@@ -230,9 +236,9 @@ const VideoControls = ({
             onCommentPress={
               setShowCommentsModal
                 ? () => {
-                    setShowCommentsModal(true);
-                    onCommentsModalOpen?.(); // Trigger refresh when modal opens
-                  }
+                  setShowCommentsModal(true);
+                  onCommentsModalOpen?.(); // Trigger refresh when modal opens
+                }
                 : undefined
             }
             onCommentUpdate={(newCount) => {
@@ -240,10 +246,10 @@ const VideoControls = ({
                 onStatsUpdate({ comments: newCount });
               }
             }}
-            // onShareUpdate={(newShares, isShared) =>
-            //   onStatsUpdate?.({ shares: newShares })
-            // }
-            // onGiftUpdate={(newGifts) => onStatsUpdate?.({ gifts: newGifts })}
+          // onShareUpdate={(newShares, isShared) =>
+          //   onStatsUpdate?.({ shares: newShares })
+          // }
+          // onGiftUpdate={(newGifts) => onStatsUpdate?.({ gifts: newGifts })}
           />
         </View>
       )}
@@ -257,7 +263,8 @@ const VideoControls = ({
                 : { ...styles.detailsGlobal, bottom: bottomOffset - 10 }
               : isLandscape
                 ? styles.detailsFullScreen
-                : { ...styles.details, bottom: bottomOffset + 20 },
+                : styles.details,
+            { paddingBottom: insets.bottom },
           ]}
         >
           <VideoDetails
@@ -328,9 +335,10 @@ const styles = StyleSheet.create({
     right: 15,
     zIndex: 5,
   },
-  interactGlobal: { position: "absolute", bottom: "15%", right: 10, zIndex: 5 },
+  interactGlobal: { position: "absolute", bottom: "20%", right: 10, zIndex: 5 },
   details: {
     position: "absolute",
+    bottom: "7%",
     width: "100%",
     paddingHorizontal: 16,
     marginBottom: 10,
@@ -346,18 +354,18 @@ const styles = StyleSheet.create({
   },
   detailsGlobal: {
     position: "absolute",
-    bottom: 0,
+    bottom: "2%",
     width: "100%",
     paddingHorizontal: 16,
-    marginBottom: 10,
+    marginBottom: 40,
     zIndex: 5,
   },
   progressContainer: {
     position: "absolute",
-    bottom: 0,
+    bottom: 50,
     left: 0,
     right: 0,
-    height: 0,
+    height: 4,
     zIndex: 10,
   },
 });
