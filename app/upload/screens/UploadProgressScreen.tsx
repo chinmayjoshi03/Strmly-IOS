@@ -65,7 +65,7 @@ const UploadProgressScreen: React.FC<UploadProgressProps> = ({
       
       {/* Header - Show cancel button during upload */}
       {!error && (
-        <View className="flex-row items-center justify-between px-4 py-3 mt-12">
+        <View className="flex-row items-center justify-between px-4 py-3 mt-3">
           <View className="w-6" />
           <Text className="text-white text-xl font-medium">Uploading</Text>
           <TouchableOpacity onPress={handleCancel}>

@@ -17,7 +17,6 @@ import { useAuthStore } from "@/store/useAuthStore";
 import Constants from "expo-constants";
 import { router, useNavigation } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { set } from "lodash";
 import ModalMessage from "@/components/AuthModalMessage";
 import { NativeStackNavigationProp } from "react-native-screens/lib/typescript/native-stack/types";
@@ -134,133 +133,34 @@ const Interests = () => {
               return <View key={j} className="w-1/2 px-2" />;
             }
 
-            const shadowColor = isSelected ? "#FF0000" : "#000000";
-
             return (
               <View key={j} className="w-1/2 px-2">
-                <View style={{ position: "relative" }}>
-                  {/* Shadow Layer 3 - Furthest/Lightest */}
-                  <View
+                <TouchableOpacity
+                  onPress={() => handleInterestToggle(item)}
+                  activeOpacity={0.7}
+                  style={{
+                    backgroundColor: isSelected ? "#333333" : "#000000",
+                    borderRadius: 12,
+                    height: 64,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingHorizontal: 16,
+                    borderWidth: 1,
+                    borderColor: isSelected ? "#555555" : "#FFFFFF20",
+                  }}
+                >
+                  <Text
+                    className="text-white text-center font-medium"
                     style={{
-                      position: "absolute",
-                      top: 6,
-                      left: -1,
-                      right: -1,
-                      bottom: -6,
-                      backgroundColor: `${shadowColor}08`,
-                      borderRadius: 12,
-                      zIndex: 1,
+                      fontSize: 14,
+                      lineHeight: 18,
                     }}
-                  />
-
-                  {/* Shadow Layer 2 - Middle */}
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 4,
-                      left: 0,
-                      right: 0,
-                      bottom: -4,
-                      backgroundColor: `${shadowColor}15`,
-                      borderRadius: 12,
-                      zIndex: 2,
-                    }}
-                  />
-
-                  {/* Shadow Layer 1 - Closest/Darkest */}
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 2,
-                      left: 1,
-                      right: -1,
-                      bottom: -2,
-                      backgroundColor: `${shadowColor}25`,
-                      borderRadius: 12,
-                      zIndex: 3,
-                    }}
-                  />
-
-                  {/* 🔮 Bottom Blur */}
-                  <BlurView
-                    intensity={60}
-                    tint="dark"
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3.5,
-                      borderBottomLeftRadius: 12,
-                      borderBottomRightRadius: 12,
-                      zIndex: 5,
-                    }}
-                  />
-
-                  {/* 🔮 Left Blur */}
-                  <BlurView
-                    intensity={60}
-                    tint="dark"
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      bottom: 0,
-                      left: -6,
-                      width: 12,
-                      borderTopLeftRadius: 12,
-                      borderBottomLeftRadius: 12,
-                      zIndex: 5,
-                    }}
-                  />
-
-                  {/* 🔮 Right Blur */}
-                  <BlurView
-                    intensity={60}
-                    tint="dark"
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      bottom: 0,
-                      right: -6,
-                      width: 12,
-                      borderTopRightRadius: 12,
-                      borderBottomRightRadius: 12,
-                      zIndex: 5,
-                    }}
-                  />
-
-                  {/* Main Button */}
-                  <TouchableOpacity
-                    onPress={() => handleInterestToggle(item)}
-                    activeOpacity={0.3}
-                    style={{
-                      backgroundColor: isSelected ? "#1a1a1a" : "#000000",
-                      borderRadius: 12,
-                      height: 64,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      paddingHorizontal: 16,
-                      borderBottomWidth: 2,
-                      borderLeftWidth: 1,
-                      borderRightWidth: 1,
-                      borderColor: isSelected ? "#FF0000" : "#FFFFFF40",
-                      position: "relative",
-                      zIndex: 4,
-                    }}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
                   >
-                    <Text
-                      className="text-white text-center font-medium"
-                      style={{
-                        fontSize: 14,
-                        lineHeight: 18,
-                      }}
-                      numberOfLines={2}
-                      ellipsizeMode="tail"
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                    {item}
+                  </Text>
+                </TouchableOpacity>
               </View>
             );
           })}
@@ -456,7 +356,7 @@ const Interests = () => {
           </ThemedText>
           <Text style={CreateProfileStyles.OptionsCardText}>
             Select only 3 of your interest from
-            {isCinema ? " “Cinema content”" : " “Non-cinema content”"}
+        {isCinema ? " \"Cinema content\"" : " \"Non-cinema content\""}
           </Text>
 
           <View style={{ marginBottom: 30, marginTop: 10 }}>

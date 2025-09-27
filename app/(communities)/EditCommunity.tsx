@@ -8,6 +8,7 @@ import {
   TextInput,
   Image,
   Alert,
+  Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown } from "lucide-react-native";
@@ -256,7 +257,7 @@ export default function EditCommunity() {
         {/* Header */}
         <View
           className="flex-row items-center justify-between px-4 py-3"
-          style={{ paddingTop: insets.top + 10 }}
+          style={{ paddingTop: Platform.OS == "ios" ? insets.top - 54 : insets.top + 10}}
         >
           <TouchableOpacity onPress={() => router.back()}>
             <ArrowLeft size={24} color="white" />

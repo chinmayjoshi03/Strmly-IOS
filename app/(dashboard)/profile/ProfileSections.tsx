@@ -308,9 +308,9 @@ export default function ProfileSections() {
 
         {/* Search Bar - Black background, smaller size, less border radius, no search icon */}
         <View className="px-6 py-1">
-          <View className="bg-black border border-gray-600 rounded-full px-5 py-1">
+          <View className="bg-black border border-gray-600 rounded-full px-5 py-3">
             <TextInput
-              className="text-white text-sm"
+              className="text-white text-m"
               placeholder="Search..."
               placeholderTextColor="gray"
               value={searchQuery}

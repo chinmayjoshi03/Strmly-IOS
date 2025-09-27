@@ -10,7 +10,9 @@ import {
   ScrollView,
   ActivityIndicator
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
+import { createSeries } from '../../../api/series/seriesActions';
 import Dropdown from '../../upload/components/Dropdown';
 import { communityOptions, formatOptions } from '../../upload/data/dropdownOptions';
 

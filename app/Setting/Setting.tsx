@@ -60,7 +60,6 @@ const Setting = () => {
     onPrimaryButtonPress: () => { },
     secondaryButtonText: "",
     info: "",
-    type: "",
     confirmRequest: "",
   });
 
@@ -154,8 +153,7 @@ const Setting = () => {
   const modalTypes = {
     support: {
       title: "Contact and Support",
-      info: "For any assistance or inquiries, please contact us at",
-      type: 'support'
+      info: "For any assistance or inquiries, please contact us at support@strmly.com",
     },
     monetization: {
       title: !monetizationStatus?.comment_monetization_status
@@ -183,12 +181,13 @@ Once approved, the "Delete Account" button will be activated in your settings. A
 
 By submitting this request, you confirm that you understand and agree to our`,
       confirmRequest:
-        "Are you sure you want to send request to activate? This action is irreversible and cannot be undone.",
+        "Are you sure you want to send request to activate  ? This action is irreversible and cannot be undone.",
       useButtons: true,
       specialText: true,
       primaryButtonText: "Agree",
       onPrimaryButtonPress: handleDeleteAccount,
       secondaryButtonText: "Cancel",
+      info: "Delete",
     },
   };
 
@@ -199,9 +198,9 @@ By submitting this request, you confirm that you understand and agree to our`,
           <ProfileTopbar name="Setting" isMore={false} hashtag={false} />
         </View>
 
-        <View className="mt-14 items-start mx-5 gap-5 w-full">
+        <View className="mt-4 items-start mx-5 gap-5 w-full">
           {/* Monetization Toggle */}
-          <View className="flex-row items-center justify-between w-full">
+         <View className="flex-row items-center justify-between w-full">
             {/* <Text className="text-white text-lg">
               Activate comment monetization
             </Text> */}
@@ -222,7 +221,7 @@ By submitting this request, you confirm that you understand and agree to our`,
               //   />
               // </Pressable>
             )} */}
-          </View>
+          </View>*/
 
           {/* Action Buttons */}
           <Pressable
@@ -272,7 +271,6 @@ By submitting this request, you confirm that you understand and agree to our`,
           secondaryButtonText={modalConfig.secondaryButtonText}
           onSecondaryButtonPress={closeModal}
           info={modalConfig.info}
-          type={modalConfig.type}
           confirmRequest={modalConfig.confirmRequest}
         />
       </SafeAreaView>

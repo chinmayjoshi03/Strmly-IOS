@@ -227,15 +227,12 @@ const WalletPage = () => {
                 walletBalance={walletData?.balance || 0}
               />
             </View>
+
+            {/* Bottom Navigation Bar */}
+           
           </>
         )}
       </ThemedView>
-      {/* Bottom Navigation Bar */}
-      {/* <View className="absolute bottom-0 left-0 right-0">
-        {!isOpenTBalance && !isOpenWBalance && !isOpenRevenue && (
-          <BottomNavBar />
-        )}
-      </View> */}
     </SafeAreaView>
   );
 };

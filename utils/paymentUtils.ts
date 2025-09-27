@@ -58,6 +58,7 @@ export const initiateGooglePlayBilling = async (
       // iOS uses transactionReceipt or transactionId for server verification
       throw new Error("iOS purchase missing transactionReceipt");
     }
+    result.purchaseToken = purchase.jwsRepresentationIos ?? undefined;
     result.transactionReceipt = purchase.transactionReceipt;
     result.transactionId = (purchase as any).transactionId ?? undefined;
   }

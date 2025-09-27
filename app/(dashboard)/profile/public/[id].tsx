@@ -473,75 +473,30 @@ export default function PublicProfilePageWithId() {
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Access Button with Gradient Border */}
-                        {userData?.userDetails?.creator_profile
-                          ?.creator_pass_price !== 0 && !hasCreatorPass ? (
+                      {/* Access Button with White Border */}
+                        {userData?.userDetails?.creator_profile?.creator_pass_price !== 0 && !hasCreatorPass ? (
                           <TouchableOpacity
                             onPress={() =>
                               router.push({
-                                pathname:
-                                  "/(dashboard)/PurchasePass/PurchaseCreatorPass/[id]",
+                                pathname: "/(dashboard)/PurchasePass/PurchaseCreatorPass/[id]",
                                 params: { id: userData?.userDetails._id },
                               })
                             }
-                            className={`h-10 rounded-lg overflow-hidden`}
+                            className="h-10 rounded-lg border border-white bg-black items-center justify-center px-2"
                           >
-                            <LinearGradient
-                              colors={[
-                                "#4400FFA6",
-                                "#FFFFFF",
-                                "#FF00004D",
-                                "#FFFFFF",
-                              ]}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 1 }}
-                              className="p-[1px] rounded-lg flex-1"
-                            >
-                              <View
-                                className={`flex-1 px-2 rounded-lg bg-black items-center justify-center`}
-                              >
-                                <View className="flex-row items-center justify-center">
-                                  <Text className="text-white text-center">
-                                    Access at
-                                  </Text>
-                                  <IndianRupee color={"white"} size={13} />
-                                  <Text className="text-white text-center ml-0.5">
-                                    {
-                                      userData?.userDetails?.creator_profile
-                                        ?.creator_pass_price
-                                    }
-                                    /month
-                                  </Text>
-                                </View>
-                              </View>
-                            </LinearGradient>
+                            <View className="flex-row items-center justify-center">
+                              <Text className="text-white text-center">Access at</Text>
+                              <IndianRupee color={"white"} size={13} />
+                              <Text className="text-white text-center ml-0.5">
+                                {userData?.userDetails?.creator_profile?.creator_pass_price}/month
+                              </Text>
+                            </View>
                           </TouchableOpacity>
-                        ) : userData?.userDetails?.creator_profile
-                            .creator_pass_price !== 0 ? (
-                          <TouchableOpacity
-                            className={`h-10 rounded-lg overflow-hidden`}
-                          >
-                            <LinearGradient
-                              colors={[
-                                "#4400FFA6",
-                                "#FFFFFF",
-                                "#FF00004D",
-                                "#FFFFFF",
-                              ]}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 1 }}
-                              className="p-[1px] rounded-lg flex-1"
-                            >
-                              <View
-                                className={`flex-1 px-4 rounded-lg bg-black items-center justify-center`}
-                              >
-                                <View className="flex-row items-center justify-center">
-                                  <Text className="text-white text-center">
-                                    Joined
-                                  </Text>
-                                </View>
-                              </View>
-                            </LinearGradient>
+                        ) : userData?.userDetails?.creator_profile.creator_pass_price !== 0 ? (
+                          <TouchableOpacity className="h-10 rounded-lg border border-white bg-black items-center justify-center px-4">
+                            <View className="flex-row items-center justify-center">
+                              <Text className="text-white text-center">Joined</Text>
+                            </View>
                           </TouchableOpacity>
                         ) : (
                           <></>

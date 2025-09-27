@@ -34,7 +34,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "black" }} edges={isLandscape ? ['right', 'left'] :['bottom', 'top']}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "black" }} edges={isLandscape ? [] :['top']}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <Stack
             screenOptions={{

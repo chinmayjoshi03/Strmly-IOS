@@ -427,22 +427,11 @@ export default function PersonalProfilePage() {
                     <Text className="text-white text-center">History</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                                   <TouchableOpacity
                     onPress={() => router.push("/(dashboard)/profile/access")}
-                    className="rounded-lg overflow-hidden"
+                    className="px-4 py-2 border border-gray-400 rounded-lg"
                   >
-                    <LinearGradient
-                      colors={["#4400FFA6", "#FFFFFF", "#FF00004D", "#FFFFFF"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      className="p-[1.5px] rounded-lg flex-1" // Use rounded-md here
-                    >
-                      <View className="flex-1 px-4 py-2 rounded-lg bg-black items-center justify-center">
-                        <Text className="text-white text-center font-bold">
-                          Access
-                        </Text>
-                      </View>
-                    </LinearGradient>
+                    <Text className="text-white text-center">Access</Text>
                   </TouchableOpacity>
                 </View>
 

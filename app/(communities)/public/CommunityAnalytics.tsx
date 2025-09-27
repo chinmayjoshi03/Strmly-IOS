@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
-    Image
+    Image,
+    Platform,
+    Modal,
+    Pressable,
+    Dimensions
 } from 'react-native';
 import { ChevronLeft, ChevronDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -52,6 +56,9 @@ const CommunityAnalytics = () => {
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+    
+    const dropdownButtonRef = useRef<TouchableOpacity>(null);
 
     const router = useRouter();
     const params = useLocalSearchParams();
@@ -244,6 +251,18 @@ const CommunityAnalytics = () => {
         return num.toString();
     };
 
+    const handleDropdownPress = () => {
+        if (dropdownButtonRef.current) {
+            dropdownButtonRef.current.measure((fx, fy, width, height, px, py) => {
+                setDropdownPosition({
+                    top: py + height + 5, // Position below the button with small gap
+                    right: Dimensions.get('window').width - px - width, // Align right edge
+                });
+                setShowTimeDropdown(true);
+            });
+        }
+    };
+
     // Show error if no community ID
     if (!communityId) {
         return (
@@ -264,7 +283,9 @@ const CommunityAnalytics = () => {
     return (
         <View className="flex-1 bg-black">
             {/* Header */}
-            <View className="flex-row items-center justify-between px-4 py-3 mt-12">
+            <View className="flex-row items-center justify-between px-4 py-3"
+            style={{paddingTop : -10}}
+            >
                 <TouchableOpacity onPress={() => router.back()}>
                     <ChevronLeft size={24} color="white" />
                 </TouchableOpacity>
@@ -313,36 +334,21 @@ const CommunityAnalytics = () => {
                             }}
                         >
                             {/* Time Filter */}
-                            <View className="flex-row justify-between items-center mb-4">
+                            <View className="flex-row justify-between items-center mb-4"
+                            style={{paddingRight: Platform.OS == "ios" ? 2 : 0}}
+                            >
                                 <Text className="text-white text-lg font-medium" style={{ fontFamily: 'Inter' }}>
                                     {activeTab === 'revenue' ? 'Community fee' : 'Total creators'}
                                 </Text>
                                 <TouchableOpacity
-                                    onPress={() => setShowTimeDropdown(!showTimeDropdown)}
+                                    ref={dropdownButtonRef}
+                                    onPress={handleDropdownPress}
                                     className="flex-row items-center border border-gray-600 rounded-lg px-3 py-2"
                                 >
                                     <Text className="text-white text-sm mr-2" style={{ fontFamily: 'Inter' }}>{timeFilter}</Text>
                                     <ChevronDown size={16} color="white" />
                                 </TouchableOpacity>
                             </View>
-
-                            {/* Time Filter Dropdown */}
-                            {showTimeDropdown && (
-                                <View className="absolute right-6 top-20 rounded-lg border border-gray-600 z-10" style={{ backgroundColor: '#0a0a0a' }}>
-                                    {timeFilterOptions.map((option) => (
-                                        <TouchableOpacity
-                                            key={option}
-                                            onPress={() => {
-                                                setTimeFilter(option);
-                                                setShowTimeDropdown(false);
-                                            }}
-                                            className="px-4 py-3 border-b border-gray-700 last:border-b-0"
-                                        >
-                                            <Text className="text-white text-base" style={{ fontFamily: 'Inter' }}>{option}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            )}
 
                             {/* Main Stat */}
                             <Text className="text-white text-3xl font-bold mb-4" style={{ fontFamily: 'Inter' }}>
@@ -354,7 +360,7 @@ const CommunityAnalytics = () => {
 
                             {/* Stats Content */}
                             {activeTab === 'non-revenue' ? (
-                                <View className="space-y-2">
+                                <View className="space-y-2 px-2">
                                     <View className="flex-row justify-between items-center">
                                         <Text className="text-gray-400 text-base" style={{ fontFamily: 'Inter' }}>Total Videos</Text>
                                         <Text className="text-white text-base" style={{ fontFamily: 'Inter' }}>{stats ? formatNumber(stats.totalVideos || 0) : '0'}</Text>
@@ -366,86 +372,72 @@ const CommunityAnalytics = () => {
                                 </View>
                             ) : null}
                         </LinearGradient>
-
-                        {/* Recent Activity / Transaction History */}
-                        {/* <View className="mb-6">
-                            <Text className="text-white text-2xl font-semibold mb-4" style={{ fontFamily: 'Poppins' }}>
-                                {activeTab === 'revenue' ? 'Transaction History' : 'Recent'}
-                            </Text>
-
-                            {activeTab === 'revenue' ? (
-                                // Show transaction history for revenue tab
-                                transactions.length > 0 ? (
-                                    <View className="space-y-4">
-                                        {transactions.map((transaction) => (
-                                            <View key={transaction.id} className="flex-row items-center justify-between py-3 px-4 bg-gray-900 rounded-lg">
-                                                <View className="flex-1">
-                                                    <Text className="text-white text-base font-medium" style={{ fontFamily: 'Inter' }}>
-                                                        {transaction.description}
-                                                    </Text>
-                                                    <Text className="text-gray-400 text-sm mt-1" style={{ fontFamily: 'Inter' }}>
-                                                        {transaction.from} • {new Date(transaction.date).toLocaleDateString('en-GB', {
-                                                            day: 'numeric',
-                                                            month: 'short',
-                                                            year: 'numeric'
-                                                        })}
-                                                    </Text>
-                                                </View>
-                                                <View className="items-end">
-                                                    <Text className={`text-base font-bold ${transaction.type === 'credit' ? 'text-green-400' : 'text-red-400'}`} style={{ fontFamily: 'Inter' }}>
-                                                        {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount}
-                                                    </Text>
-                                                    <Text className="text-gray-500 text-xs" style={{ fontFamily: 'Inter' }}>
-                                                        {transaction.status || 'Completed'}
-                                                    </Text>
-                                                </View>
-                                            </View>
-                                        ))}
-                                    </View>
-                                ) : (
-                                    <View className="py-8 items-center">
-                                        <Text className="text-gray-400 text-base" style={{ fontFamily: 'Inter' }}>
-                                            No transactions found
-                                        </Text>
-                                    </View>
-                                )
-                            ) : (
-                                // Show recent activity for non-revenue tab
-                                recentActivity.length > 0 ? (
-                                    <View className="space-y-4">
-                                        {recentActivity.map((activity) => (
-                                            <View key={activity.id} className="flex-row items-center py-2">
-                                                <Image
-                                                    source={{ uri: activity.user.avatar }}
-                                                    className="w-12 h-12 rounded-full mr-4"
-                                                    style={{ width: 48, height: 48 }}
-                                                />
-                                                <View className="flex-1">
-                                                    <Text className="text-white text-base" style={{ fontFamily: 'Inter' }}>
-                                                        <Text className="font-semibold">{activity.user.name}</Text>
-                                                        <Text className="text-gray-400"> {activity.action}</Text>
-                                                    </Text>
-                                                    <Text className="text-gray-500 text-sm mt-1" style={{ fontFamily: 'Inter' }}>
-                                                        {activity.timestamp}
-                                                    </Text>
-                                                </View>
-                                            </View>
-                                        ))}
-                                    </View>
-                                ) : (
-                                    <View className="py-8 items-center">
-                                        <Text className="text-gray-400 text-base" style={{ fontFamily: 'Inter' }}>
-                                            No recent activity
-                                        </Text>
-                                    </View>
-                                )
-                            )}
-                        </View> */}
                     </>
                 )}
             </ScrollView>
+
+            {/* Time Filter Modal Dropdown */}
+            <Modal
+                visible={showTimeDropdown}
+                transparent
+                animationType="none"
+                onRequestClose={() => setShowTimeDropdown(false)}
+            >
+                <Pressable
+                    style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                    }}
+                    onPress={() => setShowTimeDropdown(false)}
+                >
+                    <View
+                        style={{
+                            position: 'absolute',
+                            top: dropdownPosition.top,
+                            right: dropdownPosition.right,
+                            backgroundColor: "#000000",
+                            borderRadius: 12,
+                            minWidth: 150,
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 3.84,
+                            elevation: 5,
+                            borderWidth: 1,
+                            borderColor: "#333333",
+                        }}
+                    >
+                        {timeFilterOptions.map((option, index) => (
+                            <TouchableOpacity
+                                key={option}
+                                onPress={() => {
+                                    setTimeFilter(option);
+                                    setShowTimeDropdown(false);
+                                }}
+                                style={{
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 12,
+                                    borderBottomWidth: index === timeFilterOptions.length - 1 ? 0 : 1,
+                                    borderBottomColor: "#333333",
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: timeFilter === option ? "#F1C40F" : "white",
+                                        fontSize: 14,
+                                        fontFamily: "Inter",
+                                    }}
+                                >
+                                    {option}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </Pressable>
+            </Modal>
         </View>
     );
 };
 
 export default CommunityAnalytics;
+

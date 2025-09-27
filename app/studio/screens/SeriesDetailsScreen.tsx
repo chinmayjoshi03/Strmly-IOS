@@ -278,9 +278,10 @@ const SeriesDetailsScreen: React.FC<SeriesDetailsScreenProps> = ({
       <StatusBar barStyle="light-content" backgroundColor="#000" />
 
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 mt-12">
+      <View className="flex-row items-center justify-between px-4 py-3 mt-4">
         <TouchableOpacity onPress={handleBack}>
           <Ionicons name="chevron-back" size={24} color="white" />
+          
         </TouchableOpacity>
         <Text className="text-white text-xl font-medium">
           {seriesData.title}

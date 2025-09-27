@@ -10,6 +10,7 @@ import ThemedView from "@/components/ThemedView";
 import { VideoItemType } from "@/types/VideosType";
 import { useLocalSearchParams } from "expo-router";
 import VideoPlayer from "@/app/(dashboard)/long/_components/VideoPlayer";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type GiftType = {
   creator: {
@@ -21,14 +22,15 @@ export type GiftType = {
 };
 
 const { height: screenHeight } = Dimensions.get("screen");
-const VIDEO_HEIGHT = screenHeight;
+const insets = useSafeAreaInsets();
+// const VIDEO_HEIGHT = screenHeight - 100 - insets.bottom;
 
 const GlobalVideoPlayer: React.FC = () => {
   const [loading] = useState(false); // Set to false since we're not actually loading anything
   const [error] = useState<string | null>(null);
   const [visibleIndex, setVisibleIndex] = useState(0);
   const { data } = useLocalSearchParams();
-
+   const VIDEO_HEIGHT = screenHeight - insets.top - insets.bottom;
   const videos = data ? JSON.parse(data as string) : [];
 
 
@@ -69,7 +71,7 @@ const GlobalVideoPlayer: React.FC = () => {
       offset: VIDEO_HEIGHT * index,
       index,
     }),
-    []
+    [VIDEO_HEIGHT]
   );
 
   if (loading) {

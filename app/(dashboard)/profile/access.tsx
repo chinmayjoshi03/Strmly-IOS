@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   Dimensions,
+  Platform,
 } from "react-native";
 import { ArrowLeft, MoreVertical, Play, Film, User } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,8 +21,8 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { VideoItemType } from "@/types/VideosType";
 import { useVideosStore } from "@/store/useVideosStore";
+import { VideoItemType } from "@/types/VideosType";
 
 const { height } = Dimensions.get("screen");
 
@@ -141,9 +142,8 @@ export default function AccessPage() {
 
   const handleAssetClick = (asset: Asset) => {
     if (asset.content_type === "video") {
-      // Navigate to video feed with the specific video
+      // Navigate to GlobalVideoPlayer with the specific video
       try {
-        console.log("Navigating to video:", asset);
         // Transform asset data to VideoItemType format
         const videoData: VideoItemType = {
           _id: asset.content_id,
@@ -163,8 +163,7 @@ export default function AccessPage() {
           shares: asset.asset_data.shares || 0,
           views: asset.asset_data.views || 0,
           amount: asset.asset_data.amount || 0,
-          hasCreatorPassOfVideoOwner:
-            asset.asset_data.hasCreatorPassOfVideoOwner || false,
+          hasCreatorPassOfVideoOwner: asset.asset_data.hasCreatorPassOfVideoOwner || false,
           access: {
             isPlayable: true,
             freeRange: {
@@ -195,14 +194,16 @@ export default function AccessPage() {
         };
 
         // Set the video in the store and navigate to GlobalVideoPlayer
+        const { setVideosInZustand, setVideoType } = useVideosStore.getState();
         setVideosInZustand([videoData]);
-        setVideoType("video");
-
+        setVideoType('video');
+        
         router.push({
           pathname: "/(dashboard)/long/GlobalVideoPlayer",
+          pathname: "/(dashboard)/long/GlobalVideoPlayer",
           params: {
-            videoType: "video",
-            startIndex: "0",
+            videoType: 'video',
+            startIndex: '0'
           },
         });
       } catch (error) {
@@ -225,97 +226,163 @@ export default function AccessPage() {
     }
   };
 
-  const renderAssetItem = (asset: Asset) => (
-    <View key={asset._id} className="relative">
-      <TouchableOpacity
-        onPress={() => handleAssetClick(asset)}
-        activeOpacity={0.7}
+
+
+// 1. Change the LinearGradient in renderAssetItem to match iOS layout
+const renderAssetItem = (asset: Asset) => (
+  <View key={asset._id} className={Platform.OS == 'ios' ? "mb-4" : "mb-3"}>
+    <TouchableOpacity
+      onPress={() => handleAssetClick(asset)}
+      activeOpacity={0.7}
+    >
+      <LinearGradient
+        colors={["#000000", "#0a0a0a", "#1a1a1a"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className={Platform.OS === 'ios' ? "p-4 rounded-lg " : "flex-row items-center p-4 rounded-lg mb-3"}
       >
-        <LinearGradient
-          colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          className="flex-row items-center p-4 rounded-lg mb-3"
-        >
-          <View className="relative">
-            <Image
-              source={{
-                uri:
-                  asset.asset_data.thumbnailUrl ||
-                  asset.asset_data.posterUrl ||
-                  asset.asset_data.bannerUrl ||
-                  (asset.asset_data.episodes &&
-                    asset.asset_data.episodes[0]?.thumbnailUrl) ||
-                  "https://images.unsplash.com/photo-1489599735734-79b4169c2a78?w=100&h=100&fit=crop",
-              }}
-              className="w-16 h-16 rounded-lg"
-              resizeMode="cover"
-            />
-            {/* Content type indicator */}
-            <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
-              {asset.content_type === "video" ? (
-                <Play size={12} color="white" fill="white" />
-              ) : (
-                <Film size={12} color="white" />
-              )}
+        {/* iOS Layout */}
+        {Platform.OS === 'ios' ? (
+          <View className="flex-row items-start">
+            <View className="relative">
+              <Image
+                source={{
+                  uri:
+                    asset.asset_data.thumbnailUrl ||
+                    asset.asset_data.posterUrl ||
+                    asset.asset_data.bannerUrl ||
+                    (asset.asset_data.episodes &&
+                      asset.asset_data.episodes[0]?.thumbnailUrl) ||
+                    "https://images.unsplash.com/photo-1489599735734-79b4169c2a78?w=100&h=100&fit=crop",
+                }}
+                className="w-20 h-14 rounded-lg"
+                resizeMode="cover"
+              />
+              {/* Content type indicator */}
+              <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
+                {asset.content_type === "video" ? (
+                  <Play size={12} color="white" fill="white" />
+                ) : (
+                  <Film size={12} color="white" />
+                )}
+              </View>
             </View>
-          </View>
-          <View className="flex-1 ml-3">
-            <Text className="text-white font-medium text-base">
-              {asset.asset_data.title || asset.asset_data.name || "Untitled"}
-            </Text>
-            <Text className="text-gray-400 text-sm mt-1">
-              <Text className="text-blue-400 font-medium">
-                {asset.content_type === "video" ? "Video" : "Series"}
+            <View className="flex-1 ml-3">
+              <Text className="text-white font-medium text-lg mb-1">
+                {asset.asset_data.title || asset.asset_data.name || "Untitled"}
               </Text>
-              {asset.content_type === "series" &&
-                (asset.asset_data.total_episodes
-                  ? ` • ${asset.asset_data.total_episodes} episodes`
-                  : asset.asset_data.episodes
-                    ? ` • ${asset.asset_data.episodes.length} episodes`
-                    : "")}
-              {"\n"}Purchase on {formatDate(asset.granted_at)}
+              <Text className="text-blue-400 font-medium text-sm mb-1">
+                {asset.content_type === "video" ? "Video" : "Series"}
+                {asset.content_type === "series" &&
+                  (asset.asset_data.total_episodes
+                    ? ` • ${asset.asset_data.total_episodes} episodes`
+                    : asset.asset_data.episodes
+                      ? ` • ${asset.asset_data.episodes.length} episodes`
+                      : "")}
+              </Text>
+              <Text className="text-gray-400 text-sm mb-0.5">
+                Purchase on {formatDate(asset.granted_at)}
+              </Text>
               {asset.asset_data.created_by && (
                 <Text className="text-gray-500 text-xs">
-                  {"\n"}by @{asset.asset_data.created_by.username}
+                  by @{asset.asset_data.created_by.username}
                 </Text>
               )}
-            </Text>
+            </View>
+            <TouchableOpacity
+              className="p-2"
+              onPress={(e) => {
+                e.stopPropagation();
+                setActiveDropdown(
+                  activeDropdown === asset._id ? null : asset._id
+                );
+              }}
+            >
+              <MoreVertical size={20} color="#9CA3AF" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            className="p-2"
-            onPress={(e) => {
-              e.stopPropagation(); // Prevent triggering the asset click
-              setActiveDropdown(
-                activeDropdown === asset._id ? null : asset._id
-              );
-            }}
-          >
-            <MoreVertical size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-        </LinearGradient>
-      </TouchableOpacity>
+        ) : (
+          /* Android Layout (existing) */
+          <>
+            <View className="relative">
+              <Image
+                source={{
+                  uri:
+                    asset.asset_data.thumbnailUrl ||
+                    asset.asset_data.posterUrl ||
+                    asset.asset_data.bannerUrl ||
+                    (asset.asset_data.episodes &&
+                      asset.asset_data.episodes[0]?.thumbnailUrl) ||
+                    "https://images.unsplash.com/photo-1489599735734-79b4169c2a78?w=100&h=100&fit=crop",
+                }}
+                className="w-16 h-16 rounded-lg"
+                resizeMode="cover"
+              />
+              <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
+                {asset.content_type === "video" ? (
+                  <Play size={12} color="white" fill="white" />
+                ) : (
+                  <Film size={12} color="white" />
+                )}
+              </View>
+            </View>
+            <View className="flex-1 ml-3">
+              <Text className="text-white font-medium text-base">
+                {asset.asset_data.title || asset.asset_data.name || "Untitled"}
+              </Text>
+              <Text className="text-gray-400 text-sm mt-1">
+                <Text className="text-blue-400 font-medium">
+                  {asset.content_type === "video" ? "Video" : "Series"}
+                </Text>
+                {asset.content_type === "series" &&
+                  (asset.asset_data.total_episodes
+                    ? ` • ${asset.asset_data.total_episodes} episodes`
+                    : asset.asset_data.episodes
+                      ? ` • ${asset.asset_data.episodes.length} episodes`
+                      : "")}
+                {"\n"}Purchase on {formatDate(asset.granted_at)}
+                {asset.asset_data.created_by && (
+                  <Text className="text-gray-500 text-xs">
+                    {"\n"}by @{asset.asset_data.created_by.username}
+                  </Text>
+                )}
+              </Text>
+            </View>
+            <TouchableOpacity
+              className="p-2"
+              onPress={(e) => {
+                e.stopPropagation();
+                setActiveDropdown(
+                  activeDropdown === asset._id ? null : asset._id
+                );
+              }}
+            >
+              <MoreVertical size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          </>
+        )}
+      </LinearGradient>
+    </TouchableOpacity>
 
-      {/* Dropdown Menu */}
-      {activeDropdown === asset._id && (
-        <View
-          className="absolute right-4 top-16 rounded-lg border border-gray-700 z-10 min-w-32"
-          style={{ backgroundColor: "#6B7280" }}
+    {/* Dropdown Menu positioning */}
+    {activeDropdown === asset._id && (
+      <View
+        className={`absolute ${Platform.OS === 'ios' ? 'right-4 top-8' : 'right-4 top-16'} rounded-lg border border-gray-700 z-10 min-w-32`}
+        style={{ backgroundColor: "#6B7280" }}
+      >
+        <TouchableOpacity
+          className="px-4 py-3"
+          onPress={() => handleRemoveAccess(asset._id, "asset")}
+          disabled={isRemoving === asset._id}
         >
-          <TouchableOpacity
-            className="px-4 py-3"
-            onPress={() => handleRemoveAccess(asset._id, "asset")}
-            disabled={isRemoving === asset._id}
-          >
-            <Text style={{ color: "#FFFFFF" }} className="font-medium">
-              {isRemoving === asset._id ? "Removing..." : "Remove"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-
+          <Text style={{ color: "#FFFFFF" }} className="font-medium">
+            {isRemoving === asset._id ? "Removing..." : "Remove"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    )}
+  </View>
+);
   const handleCreatorClick = (creatorPass: CreatorPass) => {
     try {
       // Navigate to creator's public profile page

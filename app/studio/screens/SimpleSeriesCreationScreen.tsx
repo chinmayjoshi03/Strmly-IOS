@@ -9,7 +9,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { createSeries } from '../../../api/series/seriesActions';  // Add this import
 import { Series } from '../types';
+
+
+// ...existing code...
 
 interface SimpleSeriesCreationScreenProps {
   onBack: () => void;

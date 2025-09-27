@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Dimensions,
+  Platform,
+  Modal,
+  Pressable,
 } from "react-native";
 import { ChevronLeft, ChevronDown } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -67,6 +70,9 @@ const Dashboard = () => {
   const [timeFilter, setTimeFilter] = useState("Last 30 Days");
   const [showTimeDropdown, setShowTimeDropdown] = useState(false);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  
+  const dropdownButtonRef = useRef<TouchableOpacity>(null);
 
   const router = useRouter();
   const { token } = useAuthStore();
@@ -169,6 +175,18 @@ const Dashboard = () => {
     return activity.content || "";
   };
 
+  const handleDropdownPress = () => {
+    if (dropdownButtonRef.current) {
+      dropdownButtonRef.current.measure((fx, fy, width, height, px, py) => {
+        setDropdownPosition({
+          top: py + height + 5, // Position below the button with small gap
+          right: Dimensions.get('window').width - px - width, // Align right edge
+        });
+        setShowTimeDropdown(true);
+      });
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex:1 , backgroundColor: 'black' }} edges={[]}>
     <View className="flex-1">
@@ -225,11 +243,13 @@ const Dashboard = () => {
               colors={["#000000", "#0a0a0a", "#1a1a1a"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="rounded-2xl p-6 mb-6"
-              style={{ width: 360, height: 273, alignSelf: "center" }}
+              className="rounded-2xl px-8 py-6 mb-6"
+              style={{ width: 380, height: 273, alignSelf: "center" }}
             >
               {/* Time Filter */}
-              <View className="flex-row justify-between items-center mb-4">
+              <View className="flex-row justify-between items-center mb-4"
+              style={{paddingRight: Platform.OS == "ios" ? 2 : 0}}
+              >
                 <Text
                   className="text-white text-lg font-medium"
                   style={{ fontFamily: "Inter" }}
@@ -237,7 +257,8 @@ const Dashboard = () => {
                   {activeTab === "revenue" ? "Estimate Revenue" : "Total Views"}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => setShowTimeDropdown(!showTimeDropdown)}
+                  ref={dropdownButtonRef}
+                  onPress={handleDropdownPress}
                   className="flex-row items-center border border-gray-600 rounded-lg px-3 py-2"
                 >
                   <Text
@@ -248,32 +269,6 @@ const Dashboard = () => {
                   </Text>
                   <ChevronDown size={16} color="white" />
                 </TouchableOpacity>
-
-                {/* Time Filter Dropdown */}
-                {showTimeDropdown && (
-                  <View
-                    className="absolute right-0 top-10 rounded-lg border border-gray-600 z-10"
-                    style={{ backgroundColor: "#0a0a0a" }}
-                  >
-                    {timeFilterOptions.map((option) => (
-                      <TouchableOpacity
-                        key={option}
-                        onPress={() => {
-                          setTimeFilter(option);
-                          setShowTimeDropdown(false);
-                        }}
-                        className="px-5 py-3 border-b border-gray-700 last:border-b-0"
-                      >
-                        <Text
-                          className="text-white text-base"
-                          style={{ fontFamily: "Inter" }}
-                        >
-                          {option}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
               </View>
 
               {/* Main Stat */}
@@ -289,7 +284,7 @@ const Dashboard = () => {
               {/* Stats Content */}
               {activeTab === "revenue" ? (
                 /* Revenue Breakdown */
-                <View className="space-y-2">
+                <View className="space-y-2 px-2">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"
@@ -363,7 +358,7 @@ const Dashboard = () => {
                 </View>
               ) : (
                 /* Non-Revenue Stats */
-                <View className="space-y-2">
+                <View className="space-y-2 px-2">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"
@@ -378,48 +373,6 @@ const Dashboard = () => {
                       {stats ? formatNumber(stats.totalLikes) : "0"}
                     </Text>
                   </View>
-                  {/* <View className="flex-row justify-between items-center">
-                    <Text
-                      className="text-gray-400 text-base"
-                      style={{ fontFamily: "Inter" }}
-                    >
-                      Total comments
-                    </Text>
-                    <Text
-                      className="text-white text-base"
-                      style={{ fontFamily: "Inter" }}
-                    >
-                      {stats ? formatNumber(stats.totalComments) : "0"}
-                    </Text>
-                  </View> */}
-                  {/* <View className="flex-row justify-between items-center">
-                    <Text
-                      className="text-gray-400 text-base"
-                      style={{ fontFamily: "Inter" }}
-                    >
-                      Total repost
-                    </Text>
-                    <Text
-                      className="text-white text-base"
-                      style={{ fontFamily: "Inter" }}
-                    >
-                      {stats ? formatNumber(stats.totalReposts) : "0"}
-                    </Text>
-                  </View> */}
-                  {/* <View className="flex-row justify-between items-center">
-                    <Text
-                      className="text-gray-400 text-base"
-                      style={{ fontFamily: "Inter" }}
-                    >
-                      Total watch time
-                    </Text>
-                    <Text
-                      className="text-white text-base"
-                      style={{ fontFamily: "Inter" }}
-                    >
-                      {stats ? formatNumber(stats.totalWatchTime) : "0"}
-                    </Text>
-                  </View> */}
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"
@@ -453,67 +406,69 @@ const Dashboard = () => {
                 </View>
               )}
             </LinearGradient>
-
-            {/* Recent Revenue History - Only show in revenue tab */}
-            {/* {activeTab === "revenue" && (
-              <View className="mb-6">
-                <Text className="text-white text-2xl font-semibold mb-4">
-                  Recent
-                </Text>
-                <ScrollView
-                  className="max-h-96"
-                  showsVerticalScrollIndicator={true}
-                  nestedScrollEnabled={true}
-                >
-                  <View className="space-y-4">
-                    {recentActivity.length > 0 ? (
-                      recentActivity.map((activity) => (
-                        <View
-                          key={activity.id}
-                          className="flex-row items-center mb-4"
-                        >
-                          <Image
-                            source={{
-                              uri: getProfilePhotoUrl(
-                                activity.user.avatar,
-                                "user"
-                              ),
-                            }}
-                            className="w-12 h-12 rounded-full mr-3"
-                          />
-                          <View className="flex-1">
-                            <Text className="text-white text-lg">
-                              <Text className="font-semibold">
-                                {activity.user.name}
-                              </Text>
-                              <Text className="text-gray-400">
-                                {" "}
-                                {getActionText(activity)}
-                              </Text>
-                            </Text>
-                            <Text className="text-gray-500 text-base">
-                              {activity.timestamp}
-                            </Text>
-                          </View>
-                          {activity.amount && (
-                            <Text className="text-white text-lg font-medium">
-                              +₹{activity.amount.toFixed(1)}
-                            </Text>
-                          )}
-                        </View>
-                      ))
-                    ) : (
-                      <Text className="text-gray-400 text-base">
-                        No recent revenue activity
-                      </Text>
-                    )}
-                  </View>
-                </ScrollView>
-              </View>
-            )} */}
           </>
         )}
       </ScrollView>
+
+      {/* Time Filter Modal Dropdown */}
+      <Modal
+        visible={showTimeDropdown}
+        transparent
+        animationType="none"
+        onRequestClose={() => setShowTimeDropdown(false)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          }}
+          onPress={() => setShowTimeDropdown(false)}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              top: dropdownPosition.top,
+              right: dropdownPosition.right,
+              backgroundColor: "#000000",
+              borderRadius: 12,
+              minWidth: 150,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
+              borderWidth: 1,
+              borderColor: "#333333",
+            }}
+          >
+            {timeFilterOptions.map((option, index) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => {
+                  setTimeFilter(option);
+                  setShowTimeDropdown(false);
+                }}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderBottomWidth: index === timeFilterOptions.length - 1 ? 0 : 1,
+                  borderBottomColor: "#333333",
+                }}
+              >
+                <Text
+                  style={{
+                    color: timeFilter === option ? "#F1C40F" : "white",
+                    fontSize: 14,
+                    fontFamily: "Inter",
+                  }}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
     </SafeAreaView>
   );

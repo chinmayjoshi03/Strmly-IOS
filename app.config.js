@@ -6,17 +6,18 @@ export default {
     slug: "strmly",
     scheme: "strmly",
     owner: "strmly-technologies",
-    version: "1.0.3",
+    version: "1.0.4",
     orientation: "portrait",
-    icon: "./assets/images/logo2.png",
+    icon: "./assets/images/logo3.jpg",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
     ios: {
       bundleIdentifier: "com.anonymous.strmly",
+      buildNumber: "4", 
       supportsTablet: true
     },
     android: {
-      versionCode: 4,
+      versionCode: 3,
       adaptiveIcon: {
         foregroundImage: "./assets/images/logo3.jpg",
         backgroundColor: "#000"
@@ -25,6 +26,12 @@ export default {
       softwareKeyboardLayoutMode: "pan",
       edgeToEdgeEnabled: true
     },
+    ios: {
+        bundleIdentifier: "com.anonymous.strmly",
+        infoPlist: {
+        ITSAppUsesNonExemptEncryption: false
+      }
+    },
     web: {
       bundler: "metro",
       output: "static",
@@ -32,6 +39,7 @@ export default {
     },
     plugins: [
       "expo-router",
+      "expo-secure-store",
       [
         "expo-splash-screen",
         {
