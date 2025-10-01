@@ -179,7 +179,7 @@ const Interests = () => {
         <ThemedView style={CreateProfileStyles.TopBar}>
           <TouchableOpacity
             onPress={() => router.back()}
-            className="items-start w-full absolute top-20 z-10 left-5"
+            className="items-start w-full absolute top-10 z-10 left-5"
           >
             <Image
               source={require("../../assets/images/back.png")}
@@ -192,39 +192,34 @@ const Interests = () => {
             Pick your kind of content
           </ThemedText>
           <ThemedView style={CreateProfileStyles.CardGrid}>
-            <TouchableOpacity
+              <TouchableOpacity
               onPress={() => {
                 setType("Netflix");
                 setStep((prev) => prev + 1);
               }}
-              style={CreateProfileStyles.InterestCard}
+              style={[CreateProfileStyles.InterestCard, {
+                backgroundColor: "#000000",
+                borderWidth: 1,
+                borderColor: "#1e1e1eff",
+              }]}
             >
-              <LinearGradient
-                colors={["#000000", "#ffffff"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 6, y: 1 }}
-                style={CreateProfileStyles.InterestCard}
-              >
-                <ThemedText style={CreateProfileStyles.InterestCardText}>
-                  Netflix
-                </ThemedText>
-                <ThemedText style={CreateProfileStyles.CardContent}>
-                  Short films, web series, dramas & movies.
-                </ThemedText>
-              </LinearGradient>
+              <ThemedText style={CreateProfileStyles.InterestCardText}>
+                Netflix
+              </ThemedText>
+              <ThemedText style={CreateProfileStyles.CardContent}>
+                Short films, web series, dramas & movies.
+              </ThemedText>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setType("Youtube");
-                setStep((prev) => prev + 1);
-              }}
-              style={CreateProfileStyles.InterestCard}
-            >
-              <LinearGradient
-                colors={["#000000", "#ffffff"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 6, y: 1 }}
-                style={CreateProfileStyles.InterestCard}
+                        <TouchableOpacity
+                onPress={() => {
+                  setType("Youtube");
+                  setStep((prev) => prev + 1);
+                }}
+                style={[CreateProfileStyles.InterestCard, {
+                  backgroundColor: "#000000",
+                  borderWidth: 1,
+                  borderColor: "#1e1e1eff",
+                }]}
               >
                 <ThemedText style={CreateProfileStyles.InterestCardText}>
                   Youtube
@@ -232,8 +227,7 @@ const Interests = () => {
                 <ThemedText style={CreateProfileStyles.CardContent}>
                   Vlogs, comedy, food, beauty & Tech.
                 </ThemedText>
-              </LinearGradient>
-            </TouchableOpacity>
+              </TouchableOpacity>
           </ThemedView>
         </ThemedView>
       </ThemedView>
@@ -241,7 +235,7 @@ const Interests = () => {
   }
 
   if (Step === 2 || Step === 3) {
-    const isCinema = Step === 2;
+    const isCinema = (Step === 2 && Type === "Netflix") || (Step === 3 && Type === "Youtube");
     const items = isCinema
       ? Type === "Netflix"
         ? [
@@ -342,7 +336,7 @@ const Interests = () => {
               HandleStep(false);
               Step === 2 ? setInterests([]) : setInterests2([]);
             }}
-            className="items-start w-full absolute top-10 z-10 left-5"
+            className="items-start w-full absolute top-4 z-10 left-5"
           >
             <Image
               source={require("../../assets/images/back.png")}

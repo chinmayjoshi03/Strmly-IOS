@@ -90,7 +90,7 @@ const VideoPlayer = ({
   const [haveAccess, setHaveAccess] = useState(false);
   const [accessVersion, setAccessVersion] = useState(0);
 
-
+const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
   const { user } = useAuthStore();
 
   const [showWallet, setShowWallet] = useState(true);
@@ -685,6 +685,7 @@ const VideoPlayer = ({
         haveCreatorPass={haveCreator}
         haveAccessPass={haveAccess}
         haveCreator={setCheckCreatorPass}
+        checkAccess={setAccessCheckedAPI}
         showBuyOption={showBuyOption}
         setShowBuyOption={setShowBuyOption}
         showWallet={setShowWallet}
@@ -707,7 +708,7 @@ const VideoPlayer = ({
         onStatsUpdate={handleStatsUpdate}
       />
 
-      {showWallet && (
+      {showWallet && accessCheckedAPI && (
         <View
           className={`absolute left-0 right-0 z-10`}
           style={
@@ -732,6 +733,7 @@ const VideoPlayer = ({
             hasAccess={haveAccess || haveCreator || videoData.access.isPurchased}
             isGlobalPlayer={isGlobalPlayer}
             accessVersion={accessVersion}
+
           />
         </View>
       )}

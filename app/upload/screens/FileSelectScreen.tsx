@@ -49,13 +49,6 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
 
-        // Basic file validation
-        // const maxSize = 500 * 1024 * 1024; // 500MB
-        // if (file.size && file.size > maxSize) {
-        //   Alert.alert('File Too Large', 'Please select a video file smaller than 500MB');
-        //   return;
-        // }
-
         console.log("✅ FileSelectScreen: Selected file:", {
           name: file.name,
           size: file.size,
@@ -84,19 +77,39 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
     }
   };
 
-  // Handle continue with selected file
-  const handleContinue = () => {
+  // Show confirmation popup before continuing
+  const showConfirmationPopup = () => {
     if (selectedFile) {
-      console.log(
-        "✅ FileSelectScreen: Continue with file:",
-        selectedFile.name
+      Alert.alert(
+        "Content Ownership",
+        "You are allowed to upload only your own original content. If you upload third-party or copyrighted content, it will be deleted by the Strmly team.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Confirm",
+            onPress: handleContinueUpload,
+            style: "default"
+          }
+        ],
+        { cancelable: true }
       );
-      if (onContinueUpload) {
-        onContinueUpload();
-      }
     } else {
       console.warn("⚠️ FileSelectScreen: No file selected");
       Alert.alert("No File Selected", "Please select a video file first.");
+    }
+  };
+
+  // Handle continue with selected file after confirmation
+  const handleContinueUpload = () => {
+    console.log(
+      "✅ FileSelectScreen: Continue with file:",
+      selectedFile.name
+    );
+    if (onContinueUpload) {
+      onContinueUpload();
     }
   };
 
@@ -220,7 +233,7 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
 
         {/* Continue Button - Always show, but disabled when no file */}
         <TouchableOpacity
-          onPress={handleContinue}
+          onPress={showConfirmationPopup}
           style={[
             styles.continueButton,
             !selectedFile && styles.continueButtonDisabled,

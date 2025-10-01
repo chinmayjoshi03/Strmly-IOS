@@ -332,89 +332,21 @@ const InteractOptions = ({
   };
 
   // NEW: Report video functionality
-  const reportVideo = async () => {
-    if (!token || !videoId || isReporting) {
-      return;
-    }
+// NEW: Report video functionality
+const reportVideo = async () => {
+  if (!token || !videoId) {
+    return;
+  }
 
-    // Show confirmation dialog
-    Alert.alert(
-      "Report Video",
-      "Are you sure you want to report this video for inappropriate content?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Report",
-          style: "destructive",
-          onPress: async () => {
-            setIsReporting(true);
-            
-            try {
-              console.log("Reporting video with data:", {
-                contentId: videoId,
-                contentype: "video",
-                reason: "inappropriate_content",
-                description: `User reported video: ${name}`
-              });
-
-              const response = await fetch(
-                `${BACKEND_API_URL}/caution/report`,
-                {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    contentId: videoId,
-                    contentype: "video", // Note: matches backend variable name
-                    reason: "inappropriate_content",
-                    description: `User reported video: ${name}`
-                  }),
-                }
-              );
-
-              console.log("Report response status:", response.status);
-              
-              if (!response.ok) {
-                const errorData = await response.text();
-                console.log("Report error response:", errorData);
-                
-                if (response.status === 401) {
-                  Alert.alert("Error", "Please log in again to report content.");
-                  return;
-                }
-                throw new Error(`Failed to report video: ${response.status} - ${errorData}`);
-              }
-
-              const data = await response.json();
-              console.log("Report video response:", data);
-
-              // Show success message
-              Alert.alert(
-                "Report Submitted",
-                "Thank you for your report. We will review this content and take appropriate action if necessary.",
-                [{ text: "OK" }]
-              );
-
-            } catch (err: any) {
-              console.log("Report error:", err);
-              Alert.alert(
-                "Report Failed", 
-                `Unable to submit report: ${err.message}`,
-                [{ text: "OK" }]
-              );
-            } finally {
-              setIsReporting(false);
-            }
-          }
-        }
-      ]
-    );
-  };
+  // Navigate to report page with video details
+  router.push({
+    pathname: "/(dashboard)/long/_components/report",
+    params: {
+      videoId: videoId,
+      videoName: name,
+    },
+  });
+};
 
   // FIX: Add function to handle comment updates from CommentSection
   const handleCommentAdded = useCallback(() => {

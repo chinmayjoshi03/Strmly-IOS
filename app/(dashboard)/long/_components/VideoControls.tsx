@@ -24,6 +24,7 @@ type Props = {
   player: VideoPlayer;
   videoData: VideoItemType;
   isGlobalPlayer: boolean;
+  checkAccess: React.Dispatch<React.SetStateAction<boolean>>;
   setShowCommentsModal?: (visible: boolean) => void;
   onCommentsModalOpen?: () => void; // Add callback for when comments modal is opened
   onEpisodeChange?: (episodeData: any) => void;
@@ -55,6 +56,7 @@ const VideoControls = ({
   onEpisodeChange,
   onStatsUpdate,
   onToggleFullScreen,
+  checkAccess
 }: Props) => {
   const [playing, setPlaying] = useState(true);
   const [buffering, setBuffering] = useState(false);
@@ -291,6 +293,7 @@ const VideoControls = ({
         >
           <VideoDetails
             haveCreator={haveCreator}
+            checkAccess={checkAccess}
             setWantToBuyVideo={setWantToBuyVideo}
             videoId={videoData._id}
             type={videoData.type}
@@ -307,6 +310,7 @@ const VideoControls = ({
             onEpisodeChange={onEpisodeChange}
             showBuyOption={showBuyOption}
             setShowBuyOption={setShowBuyOption}
+
           />
         </View>
       )}
