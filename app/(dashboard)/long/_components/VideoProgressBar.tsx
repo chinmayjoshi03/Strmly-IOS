@@ -35,7 +35,8 @@ type Props = {
   access: AccessType;
   onInitialSeekComplete?: () => void;
   isVideoOwner?: boolean;
-  hasAccess: boolean;
+  haveAccess: boolean;
+  haveCreator: boolean;
   showBuyOption: React.Dispatch<React.SetStateAction<boolean>>;
   isGlobalPlayer?: boolean;
   accessVersion?: number;
@@ -58,7 +59,8 @@ const VideoProgressBar = ({
   showBuyOption,
   onInitialSeekComplete,
   isVideoOwner,
-  hasAccess,
+  haveAccess,
+  haveCreator,
   isGlobalPlayer = false,
   accessVersion,
 }: Props) => {
@@ -76,6 +78,12 @@ const VideoProgressBar = ({
 
   const initialStartTime = access?.freeRange?.start_time ?? 0;
   const endTime = access?.freeRange?.display_till_time ?? duration;
+  console.log(
+    "VideoProgressBar - initialStartTime:",
+    initialStartTime,
+    "endTime:",
+    endTime
+  );
   const hasShownAccessModal = useRef(false);
   const modalDismissed = useRef(false);
   const initialSeekTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,6 +98,13 @@ const VideoProgressBar = ({
   const { token } = useAuthStore();
   const BACKEND_API_URL = Constants.expoConfig?.extra?.BACKEND_API_URL;
 
+  const hasAccessRef = useRef(haveAccess);
+
+  useEffect(() => {
+    hasAccessRef.current = haveAccess;
+    console.log("VideoProgressBar - haveAccess changed: ", haveAccess);
+  }, [haveAccess]);
+
   useEffect(() => {
     console.log(
       "VideoProgressBar Debug - Video:",
@@ -103,7 +118,9 @@ const VideoProgressBar = ({
       "| access.isPurchased:",
       access?.isPurchased,
       "| hasAccess prop:",
-      hasAccess,
+      hasAccessRef.current,
+      "| haveCreator pass:",
+      haveCreator,
       "| isVideoOwner:",
       isVideoOwner
     );
@@ -112,7 +129,8 @@ const VideoProgressBar = ({
     endTime,
     duration,
     access?.isPurchased,
-    hasAccess,
+    hasAccessRef.current,
+    haveCreator,
     isVideoOwner,
     videoId,
   ]);
@@ -334,11 +352,15 @@ const VideoProgressBar = ({
   useEffect(() => {
     console.log("Access Debug:", {
       videoId,
-      hasAccess,
+      hasAccessRef,
       isPurchased: access?.isPurchased,
       isVideoOwner,
       accessType: access?.accessType,
-      userHasFullAccess: hasAccess || isVideoOwner || access?.isPurchased,
+      userHasFullAccess:
+        hasAccessRef.current ||
+        isVideoOwner ||
+        access?.isPurchased ||
+        haveCreator,
     });
     // Clear any existing interval
     if (timeTrackingInterval.current) {
@@ -355,7 +377,7 @@ const VideoProgressBar = ({
       "Starting time tracking for video:",
       videoId,
       "hasAccess:",
-      hasAccess
+      hasAccessRef.current
     );
 
     // Start continuous time tracking
@@ -373,7 +395,10 @@ const VideoProgressBar = ({
         // Check if video has reached the end time and user doesn't have access
         const isPremiumVideo = endTime < duration && endTime > 0;
         const userHasFullAccess =
-          hasAccess || isVideoOwner || access?.isPurchased;
+          hasAccessRef.current ||
+          isVideoOwner ||
+          access?.isPurchased ||
+          haveCreator;
 
         // Enhanced logging
         if (
@@ -386,7 +411,7 @@ const VideoProgressBar = ({
             endTime,
             hasShownAccessModal: hasShownAccessModal.current,
             modalDismissed: modalDismissed.current,
-            hasAccess,
+            hasAccessRef,
             isVideoOwner,
           });
         }
@@ -404,7 +429,7 @@ const VideoProgressBar = ({
               "End time:",
               endTime,
               "hasAccess:",
-              hasAccess,
+              hasAccessRef.current,
               "isVideoOwner:",
               isVideoOwner
             );
@@ -424,7 +449,16 @@ const VideoProgressBar = ({
         timeTrackingInterval.current = null;
       }
     };
-  }, [isActive, player, hasAccess, isVideoOwner, endTime, duration, videoId]);
+  }, [
+    isActive,
+    player,
+    hasAccessRef.current,
+    haveCreator,
+    isVideoOwner,
+    endTime,
+    duration,
+    videoId,
+  ]);
 
   // Reset modal state when video changes or becomes inactive
   useEffect(() => {
@@ -452,7 +486,7 @@ const VideoProgressBar = ({
     modalDismissed.current = true; // Mark as dismissed for this session
 
     // If user has purchased access, restart from beginning
-    if (hasAccess || isVideoOwner) {
+    if (hasAccessRef.current || isVideoOwner || haveCreator) {
       player.currentTime = initialStartTime;
       setCurrentTime(initialStartTime);
       player.play();
@@ -483,7 +517,7 @@ const VideoProgressBar = ({
   // ✅ Validate seek position based on access permissions
   const validateSeekTime = (newTimeSeconds: number): boolean => {
     // If user is the video owner, allow seeking anywhere
-    console.log("Validating seek to:", hasAccess);
+    console.log("Validating seek to:", hasAccessRef.current);
     if (isVideoOwner) {
       return true;
     }
@@ -492,8 +526,16 @@ const VideoProgressBar = ({
     const isFreeVideo =
       access?.accessType === "free" ||
       (initialStartTime === 0 && endTime >= duration);
-    const userHasAccess = hasAccess || access?.isPurchased; // This includes video purchase or creator pass
-    console.log('hasAccess:', hasAccess, 'isPurchased:', access?.isPurchased, 'userHasAccess:', userHasAccess);
+    const userHasAccess =
+      hasAccessRef.current || access?.isPurchased || haveCreator; // This includes video purchase or creator pass
+    console.log(
+      "hasAccess:",
+      hasAccessRef.current,
+      "isPurchased:",
+      access?.isPurchased,
+      "userHasAccess:",
+      userHasAccess
+    );
 
     // For free videos: allow seeking anywhere
     if (isFreeVideo) {
@@ -597,7 +639,9 @@ const VideoProgressBar = ({
 
   // Calculate restricted progress for visual indication
   const restrictedProgress =
-    !hasAccess && !isVideoOwner && endTime > 0 ? endTime / duration : 1;
+    !hasAccessRef.current && !isVideoOwner && haveCreator && endTime > 0
+      ? endTime / duration
+      : 1;
   const startProgress = initialStartTime > 0 ? initialStartTime / duration : 0;
 
   return (
@@ -625,17 +669,22 @@ const VideoProgressBar = ({
         )}
 
         {/* Show restricted area if user doesn't have access and it's not a free video */}
-        {!hasAccess && !isVideoOwner && endTime > 0 && endTime < duration && (
-          <View
-            style={[
-              styles.restrictedArea,
-              {
-                left: `${startProgress * 100}%`,
-                width: `${(restrictedProgress - startProgress) * 100}%`,
-              },
-            ]}
-          />
-        )}
+        {!hasAccessRef.current &&
+          !isVideoOwner &&
+          !haveCreator &&
+          endTime > 0 &&
+          endTime < duration && (
+            <View
+              style={[
+                styles.restrictedArea,
+                {
+                  position: "absolute",
+                  left: `${startProgress * 100}%`,
+                  width: `${(startProgress) * 100}%`,
+                },
+              ]}
+            />
+          )}
 
         {/* Filled progress */}
         <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
@@ -800,7 +849,6 @@ export default React.memo(VideoProgressBar, (prev, next) => {
     prev.videoId === next.videoId &&
     prev.player === next.player &&
     prev.isVideoOwner === next.isVideoOwner &&
-    prev.hasAccess === next.hasAccess &&
     JSON.stringify(prev.access) === JSON.stringify(next.access)
   );
 });

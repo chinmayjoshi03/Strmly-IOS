@@ -145,9 +145,10 @@ const EpisodeSelectionScreen: React.FC<EpisodeSelectionScreenProps> = ({
               key={seriesItem.id}
               onPress={() => handleSeriesPress(seriesItem.id)}
               style={styles.seriesCard}
+
             >
               <LinearGradient
-                colors={['#000000', '#0a0a0a', '#1a1a1a']}
+                colors={['#000000', '#000000', '#000000']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientCard}
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginTop: 48,
+    marginTop: 10,
   },
   headerTitle: {
     color: 'white',
@@ -251,6 +252,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 12,
+    borderWidth:1,
+    borderColor:"#101010ff"
   },
   gradientCard: {
     flexDirection: 'row',

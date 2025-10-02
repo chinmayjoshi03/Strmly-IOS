@@ -80,7 +80,7 @@ export default function CreatorPassPage() {
       <StatusBar barStyle="light-content" backgroundColor="black" />
 
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4 mt-12">
+      <View className="flex-row items-center justify-between px-6 py-4 mt-1">
         <TouchableOpacity onPress={() => router.back()}>
           <X size={24} color="white" />
         </TouchableOpacity>

@@ -14,7 +14,6 @@ import { Link, useFocusEffect, useLocalSearchParams } from "expo-router";
 import VideoPlayer from "./_components/VideoPlayer";
 import { useVideosStore } from "@/store/useVideosStore";
 import { useOrientationStore } from "@/store/useOrientationStore";
-import { useGiftingStore } from "@/store/useGiftingStore";
 
 const { height: screenHeight } = Dimensions.get("window");
 const VIDEO_HEIGHT = screenHeight;
@@ -36,7 +35,6 @@ const GlobalVideoPlayer: React.FC = () => {
 
   const { storedVideos, setVideoType } = useVideosStore();
   const { isLandscape } = useOrientationStore();
-  const { isPurchasedSeries, isVideoPurchased, isPurchasedPass, isPurchasedCommunityPass } = useGiftingStore();
   const flatListRef = useRef<FlatList>(null);
   const debounceRef = useRef<NodeJS.Timeout | number | null>(null);
 
@@ -56,14 +54,7 @@ const GlobalVideoPlayer: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       setVideoType(videoType ?? null);
-      console.log('🌍 GlobalVideoPlayer focused with access states:', {
-        isPurchasedSeries,
-        isVideoPurchased,
-        isPurchasedPass,
-        isPurchasedCommunityPass,
-        videoType
-      });
-    }, [videoType, isPurchasedSeries, isVideoPurchased, isPurchasedPass, isPurchasedCommunityPass])
+    }, [videoType])
   );
 
   const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
@@ -82,17 +73,13 @@ const GlobalVideoPlayer: React.FC = () => {
     waitForInteraction: true,
   }).current;
 
- const renderItem = useCallback(
-  ({ item, index }: { item: VideoItemType; index: number }) => {
-    if (index !== visibleIndex) {
-      return <ThemedView style={{ height: VIDEO_HEIGHT }} />;
-    }
+  const renderItem = useCallback(
+    ({ item, index }: { item: VideoItemType; index: number }) => {
+      if (index !== visibleIndex) {
+        return <ThemedView style={{ height: VIDEO_HEIGHT }} />;
+      }
 
-    return (
-      <ThemedView style={{ 
-        height: VIDEO_HEIGHT, 
-        paddingBottom: 200 // Add bottom padding to prevent progress bar from going off-screen
-      }}>
+      return (
         <VideoPlayer
           key={`video-${item._id}`}
           videoData={item}
@@ -101,11 +88,10 @@ const GlobalVideoPlayer: React.FC = () => {
           showCommentsModal={showCommentsModal}
           setShowCommentsModal={setShowCommentsModal}
         />
-      </ThemedView>
-    );
-  },
-  [visibleIndex, showCommentsModal]
-);
+      );
+    },
+    [visibleIndex, showCommentsModal]
+  );
 
   const getItemLayout = useCallback(
     (_data: any, index: number) => ({
@@ -215,7 +201,7 @@ const GlobalVideoPlayer: React.FC = () => {
           bounces={false}
           scrollEventThrottle={16}
           disableIntervalMomentum={true}
-          contentContainerStyle={{ backgroundColor: "#000" }}
+          contentContainerStyle={{backgroundColor: "#000"}}
           overScrollMode="never"
           alwaysBounceVertical={false}
         />

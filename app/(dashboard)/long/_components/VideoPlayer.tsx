@@ -714,7 +714,7 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
           style={
             !isGlobalPlayer
               ? isLandscape
-                ? { bottom: "22%" }
+                ? { bottom: "20%" }
                 : { bottom: "5%" }
               : isLandscape
                 ? { bottom: "3%" }

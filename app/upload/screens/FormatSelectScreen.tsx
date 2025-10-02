@@ -66,12 +66,7 @@ const FormatSelectScreen: React.FC<FormatSelectScreenProps> = ({
             onPress={() => handleFormatSelect('episode')}
             style={styles.optionButton}
           >
-            <LinearGradient
-              colors={['#000000', '#0a0a0a', '#1a1a1a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradientCard}
-            >
+                      <View style={[styles.gradientCard, styles.optionCard]}>
               <View style={styles.iconContainer}>
                 <Image
                   source={require('../../../assets/episode.png')}
@@ -80,7 +75,7 @@ const FormatSelectScreen: React.FC<FormatSelectScreenProps> = ({
                 />
               </View>
               <Text style={styles.optionText}>Episode</Text>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
 
           {/* Single Option */}
@@ -88,21 +83,16 @@ const FormatSelectScreen: React.FC<FormatSelectScreenProps> = ({
             onPress={() => handleFormatSelect('single')}
             style={styles.optionButton}
           >
-            <LinearGradient
-              colors={['#000000', '#0a0a0a', '#1a1a1a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradientCard}
-            >
-              <View style={styles.iconContainer}>
-                <Image
-                  source={require('../../../assets/single.png')}
-                  style={styles.formatIcon}
-                  resizeMode="contain"
-                />
+                        <View style={[styles.gradientCard, styles.optionCard]}>
+                <View style={styles.iconContainer}>
+                  <Image
+                    source={require('../../../assets/single.png')}
+                    style={styles.formatIcon}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.optionText}>Single</Text>
               </View>
-              <Text style={styles.optionText}>Single</Text>
-            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -159,7 +149,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 32,
   },
-  optionButton: {
+   optionButton: {
     flex: 1,
     marginHorizontal: 8,
     borderRadius: 16,
@@ -174,6 +164,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 3,
+  },
+  optionCard: {
+    backgroundColor: '#000000',
+    borderWidth: 1,
+    borderColor: '#555555',
   },
   iconContainer: {
     width: 64,

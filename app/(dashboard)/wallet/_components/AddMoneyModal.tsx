@@ -31,7 +31,7 @@ interface AddMoneyModalProps {
   onError?: (error: Error) => void;
 }
 
-const quickAmounts = [10, 50, 100, 200, 500];
+const quickAmounts = [10];
 
 const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
   visible,

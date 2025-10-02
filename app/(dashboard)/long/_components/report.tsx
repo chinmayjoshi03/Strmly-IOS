@@ -182,11 +182,11 @@ const handleSubmitReport = async () => {
 };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#000", paddingTop: 5 }} edges={["bottom"]}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
 
       {/* Header */}
-      <View className="flex-row items-center px-4 py-4 border-b border-gray-800">
+      <View className="flex-row items-center px-4 py-1 border-b border-gray-800">
         <TouchableOpacity onPress={() => router.back()} className="mr-4">
           <FontAwesome name="arrow-left" size={20} color="white" />
         </TouchableOpacity>

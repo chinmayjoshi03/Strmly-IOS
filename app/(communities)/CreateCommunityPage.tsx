@@ -13,7 +13,6 @@ import {
   View,
   ActivityIndicator,
   ScrollView,
-  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -175,8 +174,7 @@ const CreateCommunityPage: React.FC = () => {
 
   return (
     <ScrollView className="flex-1 bg-black">
-      <SafeAreaView style={{ flex: 1 }} 
-  edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}>
+      <SafeAreaView edges={[]}>
         <ThemedView style={CreateCommunityStyle.container}>
           <View style={CreateCommunityStyle.CreateCommunityTopBar}>
             <TouchableOpacity
@@ -236,7 +234,7 @@ const CreateCommunityPage: React.FC = () => {
                 placeholderTextColor="#B0B0B0"
                 style={[
                   CreateCommunityStyle.TextLabel,
-                  { width: "90%", color: "#fff", paddingVertical: 8 },
+                  { width: "100%", color: "#fff", paddingVertical: 8 },
                 ]}
                 value={communityName}
                 onChangeText={setCommunityName}
@@ -256,7 +254,7 @@ const CreateCommunityPage: React.FC = () => {
                 placeholderTextColor="#B0B0B0"
                 style={[
                   CreateCommunityStyle.TextLabel,
-                  { width: "90%", color: "#fff", paddingVertical: 8 },
+                  { width: "100%", color: "#fff", paddingVertical: 8 },
                 ]}
                 value={bio}
                 onChangeText={setBio}
@@ -276,7 +274,7 @@ const CreateCommunityPage: React.FC = () => {
                 onPress={() => setVisible(true)}
                 style={[
                   CreateCommunityStyle.dropdownTrigger,
-                  { width: "90%", marginTop: 8 },
+                  { width: "100%", marginTop: 8 },
                 ]}
               >
                 <ThemedText
@@ -326,7 +324,7 @@ const CreateCommunityPage: React.FC = () => {
                     Community fee amount
                   </ThemedText>
                   <TextInput
-                    placeholder="29"
+                    placeholder="ex: 29"
                     placeholderTextColor="#B0B0B0"
                     style={[
                       CreateCommunityStyle.TextLabel,
@@ -344,10 +342,10 @@ const CreateCommunityPage: React.FC = () => {
                   ]}
                 >
                   <ThemedText style={CreateCommunityStyle.InfoLabel}>
-                    Fee description
+                    Community strength
                   </ThemedText>
                   <TextInput
-                    placeholder="Monthly subscription fee"
+                    placeholder="Number of members you want to allow"
                     placeholderTextColor="#B0B0B0"
                     style={[
                       CreateCommunityStyle.TextLabel,
@@ -361,7 +359,7 @@ const CreateCommunityPage: React.FC = () => {
             )}
           </View>
 
-          <ThemedView style={CreateCommunityStyle.container}>
+          <ThemedView style={{...CreateCommunityStyle.container, marginVertical: 15}}>
             <ThemedText style={CreateCommunityStyle.ExtraInfo}>
               You can create either a free or paid community. In a free
             </ThemedText>

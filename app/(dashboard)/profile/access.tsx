@@ -234,12 +234,19 @@ const renderAssetItem = (asset: Asset) => (
     <TouchableOpacity
       onPress={() => handleAssetClick(asset)}
       activeOpacity={0.7}
+       style={{borderRadius: 7,
+        borderColor:"#262525ff",
+        borderWidth:1
+       }}
     >
       <LinearGradient
-        colors={["#000000", "#0a0a0a", "#1a1a1a"]}
+        colors={["#000000", "#000000", "#000000"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className={Platform.OS === 'ios' ? "p-4 rounded-lg " : "flex-row items-center p-4 rounded-lg mb-3"}
+       style={{borderRadius: 10,
+        borderColor:"#262525ff"
+       }}
       >
         {/* iOS Layout */}
         {Platform.OS === 'ios' ? (
@@ -405,7 +412,7 @@ const renderAssetItem = (asset: Asset) => (
       activeOpacity={0.7}
     >
       <LinearGradient
-        colors={["#000000", "#0a0a0a", "#1a1a1a"]}
+        colors={["#000000", "#000000ff", "#000000ff"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className="flex-row items-center p-4 rounded-lg mb-3"
