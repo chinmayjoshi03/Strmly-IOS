@@ -69,6 +69,7 @@ export const CreateProfileStyles = StyleSheet.create({
     alignContent: "center",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: -85
   },
   CardGrid: {
     display: "flex",

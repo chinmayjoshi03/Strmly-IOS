@@ -715,7 +715,7 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
           style={
             !isGlobalPlayer
               ? isLandscape
-                ? { bottom: "20%" }
+                ? { bottom: "8%" }
                 : { bottom: "5%" }
               : isLandscape
                 ? { bottom: "3%" }
@@ -731,15 +731,16 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
             access={videoData.access}
             onInitialSeekComplete={handleInitialSeekComplete}
             isVideoOwner={videoData.created_by._id === user?.id}
-            hasAccess={haveAccess || haveCreator || videoData.access.isPurchased}
+            haveAccess={haveAccess}
+            haveCreator={haveCreator}
             isGlobalPlayer={isGlobalPlayer}
             accessVersion={accessVersion}
-           showBuyOption={setShowBuyOption} 
+            showBuyOption={setShowBuyOption} 
           />
         </View>
       )}
 
-      {showWallet && (
+      {showWallet && !isLandscape && (
         <View
           className={`z-10 absolute left-5 ${showWallet ? "top-10" : "top-14"}`}
         >

@@ -34,6 +34,10 @@ const Interests = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alert, setAlert] = useState("");
 
+  // New state for validation alerts
+  const [showValidationAlert, setShowValidationAlert] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
+
   const [fontsLoaded] = useFonts({
     "Poppins-Regular": require("../../assets/fonts/poppins/Poppins-Regular.ttf"),
     "Poppins-Bold": require("../../assets/fonts/poppins/Poppins-Bold.ttf"),
@@ -48,8 +52,21 @@ const Interests = () => {
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
+  const showValidationPopup = (message: string) => {
+    console.log("Showing validation popup:", message);
+    setValidationMessage(message);
+    setShowValidationAlert(true);
+    setTimeout(() => setShowValidationAlert(false), 3000);
+  };
+
   const submitInterests = async () => {
-    if (!token || Interests.length !== 3) return;
+    if (!token) return;
+
+    // Check if exactly 3 interests are selected for both categories
+    if (Interests.length !== 3 || Interests2.length !== 3) {
+      showValidationPopup("Please select exactly 3 interests from each category");
+      return;
+    }
 
     setIsSubmitting(true);
     console.log("Submitting interests:", Interests, Interests2);
@@ -103,6 +120,14 @@ const Interests = () => {
       if (Step === 3) {
         submitInterests();
       } else {
+        // Check if exactly 3 interests are selected before proceeding
+        // Step 2 should check Interests, Step 3 should check Interests2
+        const currentInterests = Step === 2 ? Interests : Interests2;
+        console.log(`Step: ${Step}, Current interests count: ${currentInterests.length}`, currentInterests);
+        if (currentInterests.length !== 3) {
+          showValidationPopup("Please select exactly 3 interests to continue");
+          return;
+        }
         setStep((prev) => prev + 1);
       }
     }
@@ -114,7 +139,12 @@ const Interests = () => {
 
     if (currentInterests.includes(item)) {
       setCurrentInterests(currentInterests.filter((i) => i !== item));
-    } else if (currentInterests.length < 3) {
+    } else {
+      if (currentInterests.length >= 3) {
+        // Show popup when trying to select 4th interest
+        showValidationPopup("You can only select up to 3 interests");
+        return;
+      }
       setCurrentInterests([...currentInterests, item]);
     }
   };
@@ -179,7 +209,7 @@ const Interests = () => {
         <ThemedView style={CreateProfileStyles.TopBar}>
           <TouchableOpacity
             onPress={() => router.back()}
-            className="items-start w-full absolute top-10 z-10 left-5"
+            className="items-start w-full absolute top-5 z-10 left-5"
           >
             <Image
               source={require("../../assets/images/back.png")}
@@ -192,7 +222,7 @@ const Interests = () => {
             Pick your kind of content
           </ThemedText>
           <ThemedView style={CreateProfileStyles.CardGrid}>
-              <TouchableOpacity
+            <TouchableOpacity
               onPress={() => {
                 setType("Netflix");
                 setStep((prev) => prev + 1);
@@ -210,24 +240,24 @@ const Interests = () => {
                 Short films, web series, dramas & movies.
               </ThemedText>
             </TouchableOpacity>
-                        <TouchableOpacity
-                onPress={() => {
-                  setType("Youtube");
-                  setStep((prev) => prev + 1);
-                }}
-                style={[CreateProfileStyles.InterestCard, {
-                  backgroundColor: "#000000",
-                  borderWidth: 1,
-                  borderColor: "#1e1e1eff",
-                }]}
-              >
-                <ThemedText style={CreateProfileStyles.InterestCardText}>
-                  Youtube
-                </ThemedText>
-                <ThemedText style={CreateProfileStyles.CardContent}>
-                  Vlogs, comedy, food, beauty & Tech.
-                </ThemedText>
-              </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setType("Youtube");
+                setStep((prev) => prev + 1);
+              }}
+              style={[CreateProfileStyles.InterestCard, {
+                backgroundColor: "#000000",
+                borderWidth: 1,
+                borderColor: "#1e1e1eff",
+              }]}
+            >
+              <ThemedText style={CreateProfileStyles.InterestCardText}>
+                Youtube
+              </ThemedText>
+              <ThemedText style={CreateProfileStyles.CardContent}>
+                Vlogs, comedy, food, beauty & Tech.
+              </ThemedText>
+            </TouchableOpacity>
           </ThemedView>
         </ThemedView>
       </ThemedView>
@@ -239,118 +269,131 @@ const Interests = () => {
     const items = isCinema
       ? Type === "Netflix"
         ? [
-            "Drama",
-            "Comedy",
-            "Action & Adventure",
-            "Thriller & Suspense",
-            "Horror",
-            "Romance",
-            "Sci-Fi & Fantasy",
-            "Crime & Mystery",
-            "Documentary",
-            "Biography & True Story",
-            "Family & Kids",
-            "Teen & Young Adult",
-            "Animation & Anime",
-            "Reality & Unscripted",
-            "Talk Shows & Stand-up Comedy",
-            "Historical & Period Pieces",
-            "Musical & Music-Based",
-            "International & World Cinema",
-            "Sports & Fitness",
-            "Short Films & Anthologies",
-          ]
+          "Drama",
+          "Comedy",
+          "Action & Adventure",
+          "Thriller & Suspense",
+          "Horror",
+          "Romance",
+          "Sci-Fi & Fantasy",
+          "Crime & Mystery",
+          "Documentary",
+          "Biography & True Story",
+          "Family & Kids",
+          "Teen & Young Adult",
+          "Animation & Anime",
+          "Reality & Unscripted",
+          "Talk Shows & Stand-up Comedy",
+          "Historical & Period Pieces",
+          "Musical & Music-Based",
+          "International & World Cinema",
+          "Sports & Fitness",
+          "Short Films & Anthologies",
+        ]
         : [
-            "Entertainment",
-            "Education",
-            "Gaming",
-            "Commentary & Opinion",
-            "Music & Audio",
-            "Film & TV",
-            "Vlogs & Lifestyle",
-            "Health & Fitness",
-            "Food & Cooking",
-            "Beauty & Fashion",
-            "Science & Technology",
-            "Travel & Adventure",
-            "DIY & Crafts",
-            "Home & Family",
-            "Business & Finance",
-            "Motivation & Self-Improvement",
-            "Career & Skill Development",
-            "Spirituality & Philosophy",
-            "Reviews & Unboxings",
-            "Live Streams & Podcasts",
-          ]
+          "Entertainment",
+          "Education",
+          "Gaming",
+          "Commentary & Opinion",
+          "Music & Audio",
+          "Film & TV",
+          "Vlogs & Lifestyle",
+          "Health & Fitness",
+          "Food & Cooking",
+          "Beauty & Fashion",
+          "Science & Technology",
+          "Travel & Adventure",
+          "DIY & Crafts",
+          "Home & Family",
+          "Business & Finance",
+          "Motivation & Self-Improvement",
+          "Career & Skill Development",
+          "Spirituality & Philosophy",
+          "Reviews & Unboxings",
+          "Live Streams & Podcasts",
+        ]
       : Type === "Netflix"
         ? [
-            "Entertainment",
-            "Education",
-            "Gaming",
-            "Commentary & Opinion",
-            "Music & Audio",
-            "Film & TV",
-            "Vlogs & Lifestyle",
-            "Health & Fitness",
-            "Food & Cooking",
-            "Beauty & Fashion",
-            "Science & Technology",
-            "Travel & Adventure",
-            "DIY & Crafts",
-            "Home & Family",
-            "Business & Finance",
-            "Motivation & Self-Improvement",
-            "Career & Skill Development",
-            "Spirituality & Philosophy",
-            "Reviews & Unboxings",
-            "Live Streams & Podcasts",
-          ]
+          "Entertainment",
+          "Education",
+          "Gaming",
+          "Commentary & Opinion",
+          "Music & Audio",
+          "Film & TV",
+          "Vlogs & Lifestyle",
+          "Health & Fitness",
+          "Food & Cooking",
+          "Beauty & Fashion",
+          "Science & Technology",
+          "Travel & Adventure",
+          "DIY & Crafts",
+          "Home & Family",
+          "Business & Finance",
+          "Motivation & Self-Improvement",
+          "Career & Skill Development",
+          "Spirituality & Philosophy",
+          "Reviews & Unboxings",
+          "Live Streams & Podcasts",
+        ]
         : [
-            "Drama",
-            "Comedy",
-            "Action & Adventure",
-            "Thriller & Suspense",
-            "Horror",
-            "Romance",
-            "Sci-Fi & Fantasy",
-            "Crime & Mystery",
-            "Documentary",
-            "Biography & True Story",
-            "Family & Kids",
-            "Teen & Young Adult",
-            "Animation & Anime",
-            "Reality & Unscripted",
-            "Talk Shows & Stand-up Comedy",
-            "Historical & Period Pieces",
-            "Musical & Music-Based",
-            "International & World Cinema",
-            "Sports & Fitness",
-            "Short Films & Anthologies",
-          ];
+          "Drama",
+          "Comedy",
+          "Action & Adventure",
+          "Thriller & Suspense",
+          "Horror",
+          "Romance",
+          "Sci-Fi & Fantasy",
+          "Crime & Mystery",
+          "Documentary",
+          "Biography & True Story",
+          "Family & Kids",
+          "Teen & Young Adult",
+          "Animation & Anime",
+          "Reality & Unscripted",
+          "Talk Shows & Stand-up Comedy",
+          "Historical & Period Pieces",
+          "Musical & Music-Based",
+          "International & World Cinema",
+          "Sports & Fitness",
+          "Short Films & Anthologies",
+        ];
     return (
       <ThemedView style={CreateProfileStyles.Container}>
         <StatusBar backgroundColor={"black"} />
         <View style={CreateProfileStyles.TopBar}>
-          <TouchableOpacity
-            onPress={() => {
-              HandleStep(false);
-              Step === 2 ? setInterests([]) : setInterests2([]);
-            }}
-            className="items-start w-full absolute top-4 z-10 left-5"
-          >
-            <Image
-              source={require("../../assets/images/back.png")}
-              className="h-7 w-4"
-            />
-          </TouchableOpacity>
+          <View className="flex-row items-center w-full absolute top-4 z-10 px-5">
+            <TouchableOpacity
+              onPress={() => {
+                HandleStep(false);
+                Step === 2 ? setInterests([]) : setInterests2([]);
+              }}
+              className="mr-4"
+            >
+              <Image
+                source={require("../../assets/images/back.png")}
+                className="h-5 w-4"
+              />
+            </TouchableOpacity>
+            <View className="flex-1 items-center justify-center">
+              <Text
+                className="text-white text-xl font-bold"
+                style={{
+                  textAlign: 'center',
+                  marginLeft: -40,
+                  fontSize: 25,
+                  marginTop: 20
+                }}
+              >
+                Your Interests
+              </Text>
+            </View>
+          </View>
         </View>
-        <ScrollView contentContainerStyle={{ padding: 16, marginTop: 20 }}>
-          <ThemedText style={CreateProfileStyles.Heading}>
-            Your Interests
-          </ThemedText>
+        <ScrollView contentContainerStyle={{ padding: 16, marginTop: 0, alignItems: 'center' }}>
+
           <Text style={CreateProfileStyles.OptionsCardText}>
             Select only 3 of your interest from
-        {isCinema ? " \"Cinema content\"" : " \"Non-cinema content\""}
+            {isCinema ? " \"Cinema content\"" : " \"Non-cinema content\""}
           </Text>
 
           <View style={{ marginBottom: 30, marginTop: 10 }}>
@@ -378,12 +421,38 @@ const Interests = () => {
           </TouchableOpacity>
         </View>
 
-        <ModalMessage
-          visible={showAlert}
-          text={alert}
-          needCloseButton={needButton}
-          onClose={() => setShowAlert(false)}
-        />
+        {/* Modals with absolute positioning */}
+        {showAlert && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+            <ModalMessage
+              visible={showAlert}
+              text={alert}
+              needCloseButton={needButton}
+              onClose={() => setShowAlert(false)}
+            />
+          </View>
+        )}
+
+        {showValidationAlert && (
+          <View style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 99999,
+            backgroundColor: 'rgba(0,0,0,0.5)'
+          }}>
+            <ModalMessage
+              visible={showValidationAlert}
+              text={validationMessage}
+              needCloseButton={false}
+              onClose={() => setShowValidationAlert(false)}
+            />
+          </View>
+        )}
       </ThemedView>
     );
   }

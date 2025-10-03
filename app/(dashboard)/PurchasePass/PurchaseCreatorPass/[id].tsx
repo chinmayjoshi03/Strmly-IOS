@@ -93,15 +93,15 @@ const CreatorPassDemo = () => {
         style={{ flex: 1 }}
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-10 py-3">
+        <View className="flex-row items-center justify-between px-4 pt-5 py-3">
           <TouchableOpacity onPress={() => router.back()}>
             <X size={24} color="white" />
           </TouchableOpacity>
           <View className="w-6" />
         </View>
 
-        {/* Content */}
-        <View className="flex-1 items-center justify-center px-6">
+        {/* Content - Shifted upward */}
+        <View className="flex-1 items-center justify-center px-6 mt-[-90px]">
           {/* Paperclip Icon */}
           <View className="mb-8">
             <View className="w-20 h-20 rounded-2xl items-center justify-center">
@@ -116,20 +116,10 @@ const CreatorPassDemo = () => {
 
           {/* Features Card */}
           <View className="w-full max-w-md rounded-2xl mb-8 overflow-hidden">
-            {/* Gradient Border */}
-            <LinearGradient
-              colors={["#4400FFA6", "#FFFFFF", "#FF00004D", "#FFFFFF"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="p-[2px] rounded-2xl"
-            >
-              {/* Inner Card with Black to Grey Gradient */}
-              <LinearGradient
-                colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="rounded-2xl p-8"
-              >
+            {/* Grey Border */}
+            <View className="p-[2px] rounded-3xl bg-black">
+              {/* Inner Card with Black Background */}
+              <View className="bg-black rounded-3xl p-8 border border-gray-900">
                 {/* Feature 1 */}
                 <View className="flex-row items-start mb-8">
                   <View className="mr-6 mt-1">
@@ -170,17 +160,12 @@ const CreatorPassDemo = () => {
                     Directly support {userData?.userDetails?.username}'s work
                   </Text>
                 </View>
-              </LinearGradient>
-            </LinearGradient>
+              </View>
+            </View>
           </View>
 
           {/* Join Button */}
-          <LinearGradient
-            colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="rounded-full"
-          >
+         <View className="rounded-3xl border border-gray-800 bg-black">
             <TouchableOpacity
               onPress={() => router.replace(`/(payments)/CreatorPassBuy/${id}`)}
               className="px-8 py-4 rounded-full"
@@ -191,7 +176,7 @@ const CreatorPassDemo = () => {
                 /month
               </Text>
             </TouchableOpacity>
-          </LinearGradient>
+          </View>
         </View>
       </View>
     </SafeAreaView>

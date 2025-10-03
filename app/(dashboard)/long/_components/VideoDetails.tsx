@@ -124,6 +124,7 @@ const VideoDetails = ({
 
   const { setVideosInZustand, videoType, setVideoType } = useVideosStore();
   const [seriesVideos, setSeriesVideos] = useState<any>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<{episodeIndex: number} | null>(null);
 
   const BACKEND_API_URL = Constants.expoConfig?.extra?.BACKEND_API_URL;
 
@@ -134,6 +135,21 @@ const VideoDetails = ({
   useEffect(() => {
     if (episode_number) setSelectedEpisodeIndex(episode_number);
   }, [episode_number]);
+
+  // Handle navigation after series data is fetched
+  useEffect(() => {
+    if (pendingNavigation && seriesVideos && seriesVideos.length > 0) {
+      console.log("🎬 Series data loaded, proceeding with navigation");
+      setVideosInZustand(seriesVideos);
+      
+      router.push({
+        pathname: "/(dashboard)/long/GlobalVideoPlayer",
+        params: { startIndex: pendingNavigation.episodeIndex.toString(), videoType: "series" },
+      });
+      
+      setPendingNavigation(null);
+    }
+  }, [pendingNavigation, seriesVideos, setVideosInZustand]);
 
   useFocusEffect(
     useCallback(() => {
@@ -787,10 +803,22 @@ const VideoDetails = ({
                   setShowDropdown(false);
                   console.log("selectedEpisodeIndex", idx);
                   setVideosInZustand(seriesVideos);
-                  router.push({
-                    pathname: "/(dashboard)/long/GlobalVideoPlayer",
-                    params: { startIndex: idx, videoType: "series" },
-                  });
+                  // For portrait mode, we need to update the videos store with series episodes
+                  // before navigating to ensure proper episode switching
+                  if (seriesVideos && seriesVideos.length > 0) {
+                    console.log("🎬 Updating videos store with series episodes for portrait mode");
+                    setVideosInZustand(seriesVideos);
+                    
+                    router.push({
+                      pathname: "/(dashboard)/long/GlobalVideoPlayer",
+                      params: { startIndex: idx.toString(), videoType: "series" },
+                    });
+                  } else {
+                    console.log("⚠️ No series videos available, fetching before navigation");
+                    // Set pending navigation and fetch series data
+                    setPendingNavigation({ episodeIndex: idx });
+                    fetchSeriesData();
+                  }
 
                   // Call the episode change callback if provided
                   // if (onEpisodeChange && ep) {

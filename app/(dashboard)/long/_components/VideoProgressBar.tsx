@@ -30,7 +30,6 @@ type Props = {
   videoId: string;
   player: VideoPlayer;
   isActive: boolean;
-  hasCreatorPassOfVideoOwner: boolean;
   duration: number;
   access: AccessType;
   onInitialSeekComplete?: () => void;
@@ -53,7 +52,6 @@ const VideoProgressBar = ({
   videoId,
   player,
   isActive,
-  hasCreatorPassOfVideoOwner,
   duration,
   access,
   showBuyOption,
@@ -78,12 +76,12 @@ const VideoProgressBar = ({
 
   const initialStartTime = access?.freeRange?.start_time ?? 0;
   const endTime = access?.freeRange?.display_till_time ?? duration;
-  console.log(
-    "VideoProgressBar - initialStartTime:",
-    initialStartTime,
-    "endTime:",
-    endTime
-  );
+  // console.log(
+  //   "VideoProgressBar - initialStartTime:",
+  //   initialStartTime,
+  //   "endTime:",
+  //   endTime
+  // );
   const hasShownAccessModal = useRef(false);
   const modalDismissed = useRef(false);
   const initialSeekTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -401,20 +399,20 @@ const VideoProgressBar = ({
           haveCreator;
 
         // Enhanced logging
-        if (
-          isPremiumVideo &&
-          !userHasFullAccess &&
-          currentPlayerTime >= endTime - 0.1
-        ) {
-          console.log("Near end time:", {
-            currentTime: currentPlayerTime,
-            endTime,
-            hasShownAccessModal: hasShownAccessModal.current,
-            modalDismissed: modalDismissed.current,
-            hasAccessRef,
-            isVideoOwner,
-          });
-        }
+        // if (
+        //   isPremiumVideo &&
+        //   !userHasFullAccess &&
+        //   currentPlayerTime >= endTime - 0.1
+        // ) {
+        //   console.log("Near end time:", {
+        //     currentTime: currentPlayerTime,
+        //     endTime,
+        //     hasShownAccessModal: hasShownAccessModal.current,
+        //     modalDismissed: modalDismissed.current,
+        //     hasAccessRef,
+        //     isVideoOwner,
+        //   });
+        // }
 
         // Only show modal if user truly doesn't have access to the full content
         if (
@@ -543,12 +541,12 @@ const VideoProgressBar = ({
     }
 
     // For premium videos with access (purchased or creator pass): allow seeking anywhere
-    if (userHasAccess || hasCreatorPassOfVideoOwner) {
+    if (userHasAccess) {
       return true;
     }
 
     // For premium videos without access: only allow seeking within free range (start_time to display_till_time)
-    if (!userHasAccess && !hasCreatorPassOfVideoOwner) {
+    if (!userHasAccess) {
       // Check if trying to seek before start time
       if (initialStartTime > 0 && newTimeSeconds < initialStartTime) {
         Alert.alert(
