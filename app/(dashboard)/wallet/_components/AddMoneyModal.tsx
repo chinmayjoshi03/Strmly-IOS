@@ -286,7 +286,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
                     fontWeight: "600",
                   }}
                 >
-                  Add ₹{amount || "0"}
+                  Purchase ₹{amount || "0"}
                 </Text>
               )}
             </TouchableOpacity>
