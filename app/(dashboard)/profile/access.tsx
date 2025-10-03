@@ -200,10 +200,9 @@ export default function AccessPage() {
         
         router.push({
           pathname: "/(dashboard)/long/GlobalVideoPlayer",
-          pathname: "/(dashboard)/long/GlobalVideoPlayer",
           params: {
-            videoType: 'video',
-            startIndex: '0'
+            videoType: "video",
+            startIndex: "0",
           },
         });
       } catch (error) {
@@ -252,19 +251,19 @@ const renderAssetItem = (asset: Asset) => (
         {Platform.OS === 'ios' ? (
           <View className="flex-row items-start">
             <View className="relative">
-              <Image
-                source={{
-                  uri:
-                    asset.asset_data.thumbnailUrl ||
-                    asset.asset_data.posterUrl ||
-                    asset.asset_data.bannerUrl ||
-                    (asset.asset_data.episodes &&
-                      asset.asset_data.episodes[0]?.thumbnailUrl) ||
-                    "https://images.unsplash.com/photo-1489599735734-79b4169c2a78?w=100&h=100&fit=crop",
-                }}
-                className="w-20 h-14 rounded-lg"
-                resizeMode="cover"
-              />
+             <Image
+                  source={{
+                    uri:
+                      asset.asset_data?.thumbnailUrl ||
+                      asset.asset_data?.posterUrl ||
+                      asset.asset_data?.bannerUrl ||
+                      (asset.asset_data?.episodes &&
+                        asset.asset_data.episodes[0]?.thumbnailUrl) ||
+                      "https://images.unsplash.com/photo-1489599735734-79b4169c2a78?w=100&h=100&fit=crop",
+                  }}
+                  className="w-20 h-14 rounded-lg"
+                  resizeMode="cover"
+                />
               {/* Content type indicator */}
               <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
                 {asset.content_type === "video" ? (
@@ -276,25 +275,25 @@ const renderAssetItem = (asset: Asset) => (
             </View>
             <View className="flex-1 ml-3">
               <Text className="text-white font-medium text-lg mb-1">
-                {asset.asset_data.title || asset.asset_data.name || "Untitled"}
-              </Text>
-              <Text className="text-blue-400 font-medium text-sm mb-1">
-                {asset.content_type === "video" ? "Video" : "Series"}
-                {asset.content_type === "series" &&
-                  (asset.asset_data.total_episodes
-                    ? ` • ${asset.asset_data.total_episodes} episodes`
-                    : asset.asset_data.episodes
-                      ? ` • ${asset.asset_data.episodes.length} episodes`
-                      : "")}
-              </Text>
+                  {asset.asset_data?.title || asset.asset_data?.name || "Untitled"}
+                </Text>
+                <Text className="text-blue-400 font-medium text-sm mb-1">
+                  {asset.content_type === "video" ? "Video" : "Series"}
+                  {asset.content_type === "series" &&
+                    (asset.asset_data?.total_episodes
+                      ? ` • ${asset.asset_data.total_episodes} episodes`
+                      : asset.asset_data?.episodes
+                        ? ` • ${asset.asset_data.episodes.length} episodes`
+                        : "")}
+                </Text>
               <Text className="text-gray-400 text-sm mb-0.5">
                 Purchase on {formatDate(asset.granted_at)}
               </Text>
-              {asset.asset_data.created_by && (
-                <Text className="text-gray-500 text-xs">
-                  by @{asset.asset_data.created_by.username}
-                </Text>
-              )}
+            {asset.asset_data?.created_by && (
+  <Text className="text-gray-500 text-xs">
+    by @{asset.asset_data.created_by.username}
+  </Text>
+)}
             </View>
             <TouchableOpacity
               className="p-2"

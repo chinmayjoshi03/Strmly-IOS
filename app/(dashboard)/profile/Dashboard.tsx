@@ -289,7 +289,7 @@ const Dashboard = () => {
               {/* Stats Content */}
               {activeTab === "revenue" ? (
                 /* Revenue Breakdown */
-                <View className="space-y-2 px-2">
+                <View className="space-y-2 px--8">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"
@@ -363,7 +363,7 @@ const Dashboard = () => {
                 </View>
               ) : (
                 /* Non-Revenue Stats */
-                <View className="space-y-2 px-2">
+                <View className="space-y-2 px--8">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"

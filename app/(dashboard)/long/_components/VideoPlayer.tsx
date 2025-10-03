@@ -90,6 +90,7 @@ const VideoPlayer = ({
   const [haveAccess, setHaveAccess] = useState(false);
   const [accessVersion, setAccessVersion] = useState(0);
 
+
 const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
   const { user } = useAuthStore();
 
@@ -733,7 +734,7 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
             hasAccess={haveAccess || haveCreator || videoData.access.isPurchased}
             isGlobalPlayer={isGlobalPlayer}
             accessVersion={accessVersion}
-
+           showBuyOption={setShowBuyOption} 
           />
         </View>
       )}

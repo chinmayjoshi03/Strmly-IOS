@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  interact: { position: "absolute", bottom: "10%", right: 10, zIndex: 5 },
+  interact: { position: "absolute", bottom: "20%", right: 10, zIndex: 5 },
   interactFullScreen: {
     position: "absolute",
     bottom: "18%",

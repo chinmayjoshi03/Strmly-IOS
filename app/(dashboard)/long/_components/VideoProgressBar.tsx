@@ -509,10 +509,10 @@ const VideoProgressBar = ({
     });
   };
 
-  const handleShowPaidButton = () => {
-    showBuyOption(true);
-    handleAccessModalClose();
-  };
+ const handleShowPaidButton = () => {
+  showBuyOption?.(true);
+  handleAccessModalClose();
+};
 
   // ✅ Validate seek position based on access permissions
   const validateSeekTime = (newTimeSeconds: number): boolean => {
@@ -721,20 +721,15 @@ const VideoProgressBar = ({
               You've reached the end of the free preview. Purchase this content
               to watch the full video and unlock all features.
             </Text>
-            <View className="items-center justify-center pr-[10%] gap-5 w-full flex-row">
+       
               <Pressable
                 onPress={handleAccessModalClose}
                 style={styles.accessModalButton}
               >
                 <Text style={styles.accessModalButtonText}>Got it</Text>
               </Pressable>
-              <Pressable
-                onPress={handleShowPaidButton}
-                style={styles.accessModalButton}
-              >
-                <Text style={styles.accessModalButtonText}>Buy</Text>
-              </Pressable>
-            </View>
+           
+     
           </View>
         </View>
       )}
