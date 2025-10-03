@@ -397,36 +397,13 @@ const VideoControls = ({
           ]}
         >
           {isLandscape ? (
-            // Minimal fullscreen controls - only title, existing episode switcher, and exit fullscreen
+            // Minimal fullscreen controls - only title and exit fullscreen
             <View className="w-full">
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center gap-1 flex-1">
                   <Text className="text-white text-lg font-semibold uppercase" numberOfLines={1}>
                     {videoData.name}
                   </Text>
-                  {/* Episode switcher - only show for non-global players with series */}
-                  {!isGlobalPlayer && videoData?.series !== null && videoType !== "series" && (
-                    <TouchableOpacity
-                      className="border border-white rounded-xl px-2 py-0.5 ml-2"
-                      disabled={isLoadingSeriesVideos}
-                      onPress={() => {
-                        console.log("Episode switcher clicked, seriesVideos:", !!seriesVideos);
-                        setShowEpisodeDropdown((prev) => !prev);
-                        // Always fetch series data to ensure we have complete episode information
-                        if (!seriesVideos || seriesVideos.length === 0) {
-                          console.log("Fetching series data...");
-                          fetchSeriesData();
-                        }
-                      }}
-                    >
-                      <View className="flex-row items-center">
-                        <Text className="font-semibold text-xs text-white mr-1">
-                          Ep: {(videoData?.episode_number || selectedEpisodeIndex) ? String(videoData?.episode_number || selectedEpisodeIndex).padStart(2, '0') : '01'}
-                        </Text>
-                        <ChevronDownIcon color={"white"} size={12} />
-                      </View>
-                    </TouchableOpacity>
-                  )}
                 </View>
 
                 {/* Exit Fullscreen Button */}

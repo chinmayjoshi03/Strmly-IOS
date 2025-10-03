@@ -20,7 +20,7 @@ interface AddMoneyModalProps {
   onClose: () => void;
   onSuccess: (amount: number) => void;
   onCreateOrder: (amount: number) => Promise<any>;
-  
+
   onVerifyPayment: (
     // orderIdOrTransactionId: string, // either purchaseToken/transactionId depending on platform
     productId: string,
@@ -31,7 +31,7 @@ interface AddMoneyModalProps {
   onError?: (error: Error) => void;
 }
 
-const quickAmounts = [10];
+const quickAmounts = [10, 50, 100, 200, 500];
 
 const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
   visible,
@@ -97,10 +97,10 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
       }
 
       // await onVerifyPayment(
-      //   "GPA.3338-3763-7905-10071",
       //   "add_money_to_wallet_50",
       //   "caocikealmedahkkacpflild.AO-J1Owzxzs2mnEor8iwlyLg-W7_e8_rHhxd_ep3GfgyVW-LZSw6LYG2wRIP85GrfwCtzcNZKHbR2J_MasW6DcfGocW1YIixTg",
-      //   numAmount
+      //   numAmount,
+      //   'ios'
       // );
 
       try {

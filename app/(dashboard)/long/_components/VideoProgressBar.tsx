@@ -30,6 +30,7 @@ type Props = {
   videoId: string;
   player: VideoPlayer;
   isActive: boolean;
+  hasCreatorPassOfVideoOwner: boolean;
   duration: number;
   access: AccessType;
   onInitialSeekComplete?: () => void;
@@ -52,6 +53,7 @@ const VideoProgressBar = ({
   videoId,
   player,
   isActive,
+  hasCreatorPassOfVideoOwner,
   duration,
   access,
   showBuyOption,
@@ -76,12 +78,7 @@ const VideoProgressBar = ({
 
   const initialStartTime = access?.freeRange?.start_time ?? 0;
   const endTime = access?.freeRange?.display_till_time ?? duration;
-  // console.log(
-  //   "VideoProgressBar - initialStartTime:",
-  //   initialStartTime,
-  //   "endTime:",
-  //   endTime
-  // );
+
   const hasShownAccessModal = useRef(false);
   const modalDismissed = useRef(false);
   const initialSeekTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -101,6 +98,13 @@ const VideoProgressBar = ({
   useEffect(() => {
     hasAccessRef.current = haveAccess;
     console.log("VideoProgressBar - haveAccess changed: ", haveAccess);
+
+    console.log(
+      "VideoProgressBar - initialStartTime:",
+      initialStartTime,
+      "endTime:",
+      endTime
+    );
   }, [haveAccess]);
 
   useEffect(() => {
@@ -326,8 +330,8 @@ const VideoProgressBar = ({
     if (!hasTriggered2Percent.current && percentWatched >= 2) {
       hasTriggered2Percent.current = true;
       console.log(`Triggering 2% milestone for video ${videoId}`);
-      // saveVideoToHistory();
-      // incrementVideoViews();
+      saveVideoToHistory();
+      incrementVideoViews();
     }
   }, [
     currentTime,
@@ -399,20 +403,20 @@ const VideoProgressBar = ({
           haveCreator;
 
         // Enhanced logging
-        // if (
-        //   isPremiumVideo &&
-        //   !userHasFullAccess &&
-        //   currentPlayerTime >= endTime - 0.1
-        // ) {
-        //   console.log("Near end time:", {
-        //     currentTime: currentPlayerTime,
-        //     endTime,
-        //     hasShownAccessModal: hasShownAccessModal.current,
-        //     modalDismissed: modalDismissed.current,
-        //     hasAccessRef,
-        //     isVideoOwner,
-        //   });
-        // }
+        if (
+          isPremiumVideo &&
+          !userHasFullAccess &&
+          currentPlayerTime >= endTime - 0.1
+        ) {
+          console.log("Near end time:", {
+            currentTime: currentPlayerTime,
+            endTime,
+            hasShownAccessModal: hasShownAccessModal.current,
+            modalDismissed: modalDismissed.current,
+            hasAccessRef,
+            isVideoOwner,
+          });
+        }
 
         // Only show modal if user truly doesn't have access to the full content
         if (
@@ -507,10 +511,10 @@ const VideoProgressBar = ({
     });
   };
 
- const handleShowPaidButton = () => {
-  showBuyOption?.(true);
-  handleAccessModalClose();
-};
+  const handleShowPaidButton = () => {
+    showBuyOption(true);
+    handleAccessModalClose();
+  };
 
   // ✅ Validate seek position based on access permissions
   const validateSeekTime = (newTimeSeconds: number): boolean => {
@@ -541,12 +545,12 @@ const VideoProgressBar = ({
     }
 
     // For premium videos with access (purchased or creator pass): allow seeking anywhere
-    if (userHasAccess) {
+    if (userHasAccess || hasCreatorPassOfVideoOwner) {
       return true;
     }
 
     // For premium videos without access: only allow seeking within free range (start_time to display_till_time)
-    if (!userHasAccess) {
+    if (!userHasAccess && !hasCreatorPassOfVideoOwner) {
       // Check if trying to seek before start time
       if (initialStartTime > 0 && newTimeSeconds < initialStartTime) {
         Alert.alert(
@@ -637,7 +641,7 @@ const VideoProgressBar = ({
 
   // Calculate restricted progress for visual indication
   const restrictedProgress =
-    !hasAccessRef.current && !isVideoOwner && haveCreator && endTime > 0
+    !hasAccessRef.current && !isVideoOwner && !haveCreator && endTime > 0
       ? endTime / duration
       : 1;
   const startProgress = initialStartTime > 0 ? initialStartTime / duration : 0;
@@ -678,7 +682,7 @@ const VideoProgressBar = ({
                 {
                   position: "absolute",
                   left: `${startProgress * 100}%`,
-                  width: `${(startProgress) * 100}%`,
+                  width: `${(restrictedProgress - startProgress) * 100}%`,
                 },
               ]}
             />
@@ -719,15 +723,20 @@ const VideoProgressBar = ({
               You've reached the end of the free preview. Purchase this content
               to watch the full video and unlock all features.
             </Text>
-       
+            <View className="items-center justify-center pr-[10%] gap-5 w-full flex-row">
               <Pressable
                 onPress={handleAccessModalClose}
                 style={styles.accessModalButton}
               >
                 <Text style={styles.accessModalButtonText}>Got it</Text>
               </Pressable>
-           
-     
+              <Pressable
+                onPress={handleShowPaidButton}
+                style={styles.accessModalButton}
+              >
+                <Text style={styles.accessModalButtonText}>Buy</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       )}
@@ -803,7 +812,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    // backgroundColor: "rgba(0, 0, 0, 0.8)",
     zIndex: 1000,
   },
   accessModalContent: {
