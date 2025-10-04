@@ -29,7 +29,8 @@ export default {
     ios: {
         bundleIdentifier: "com.anonymous.strmly",
         infoPlist: {
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: false,
+         UIBackgroundModes: []
       }
     },
     web: {
@@ -52,7 +53,7 @@ export default {
       [
         "expo-video",
         {
-          supportsBackgroundPlayback: true,
+          supportsBackgroundPlayback: false,
           supportsPictureInPicture: true
         }
       ],

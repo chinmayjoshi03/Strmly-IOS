@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   Dimensions,
   ScrollView,
   ActivityIndicator,
@@ -25,6 +26,7 @@ import {
   useIsFocused,
   useNavigation,
 } from "@react-navigation/native";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface CommentsSectionProps {
   onClose: () => void;
@@ -106,6 +108,7 @@ const CommentsSection = ({
   const insets = useSafeAreaInsets();
   const { commentMonetizationEnabled, loading: monetizationLoading } =
     useMonetization(false);
+  const { user } = useAuthStore();
 
   const {
     comments,
@@ -118,6 +121,8 @@ const CommentsSection = ({
     fetchReplies,
     upvoteReply,
     downvoteReply,
+    deleteComment,
+    deleteReply,
   } = useComments({ videoId });
 
   // Debug logging for focus changes
@@ -449,9 +454,78 @@ const CommentsSection = ({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    Alert.alert(
+      "Delete Comment",
+      "Are you sure you want to delete this comment?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteComment(commentId);
+              // Comment is automatically removed from state in the deleteComment function
+            } catch (error) {
+              console.error("Error deleting comment:", error);
+              Alert.alert("Error", "Failed to delete comment. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteReply = async (replyId: string, commentId: string) => {
+    Alert.alert(
+      "Delete Reply",
+      "Are you sure you want to delete this reply?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteReply(replyId, commentId);
+              // Refresh replies to show updated list
+              const updatedReplies = await fetchReplies(commentId);
+              setRepliesData((prev) => ({
+                ...prev,
+                [commentId]: updatedReplies || [],
+              }));
+            } catch (error) {
+              console.error("Error deleting reply:", error);
+              Alert.alert("Error", "Failed to delete reply. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Helper function to check if current user can delete a comment/reply
+  const canDeleteComment = (commentUserId: string) => {
+    return user?.id === commentUserId;
+  };
+
   const renderReply = (reply: any, parentCommentId: string) => (
     <View key={reply._id} style={{ marginLeft: 56, marginBottom: 12 }}>
-      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+      <Pressable
+        onLongPress={() => {
+          if (canDeleteComment(reply.user?.id)) {
+            handleDeleteReply(reply._id, parentCommentId);
+          }
+        }}
+        style={{ flexDirection: "row", alignItems: "flex-start" }}
+      >
         {/* Left content */}
         <View
           style={{ flex: 1, flexDirection: "row", alignItems: "flex-start" }}
@@ -537,7 +611,7 @@ const CommentsSection = ({
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Pressable>
 
       {/* Reply button directly below the reply */}
       <View style={{ marginLeft: 44, marginTop: 4 }}>
@@ -568,7 +642,14 @@ const CommentsSection = ({
         key={item._id}
         style={{ paddingHorizontal: 20, paddingVertical: 12 }}
       >
-        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        <Pressable
+          onLongPress={() => {
+            if (canDeleteComment(item.user?.id)) {
+              handleDeleteComment(item._id);
+            }
+          }}
+          style={{ flexDirection: "row", alignItems: "flex-start" }}
+        >
           {/* Left content */}
           <View
             style={{ flex: 1, flexDirection: "row", alignItems: "flex-start" }}
@@ -706,7 +787,7 @@ const CommentsSection = ({
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Pressable>
 
         {/* Reply and View replies buttons on the same line */}
         <View
@@ -805,7 +886,7 @@ const CommentsSection = ({
           right: 0,
           ...(isInputFocused && keyboardHeight > 0 ? {
             // When keyboard is open, position so the input sits above keyboard
-            bottom: keyboardHeight -260,
+            bottom: keyboardHeight - 260,
             height: Math.min(SCREEN_HEIGHT * 0.5, SCREEN_HEIGHT - keyboardHeight - 50),
           } : {
             // When keyboard is closed, normal positioning

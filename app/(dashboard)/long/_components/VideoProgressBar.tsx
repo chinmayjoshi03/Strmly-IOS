@@ -408,14 +408,14 @@ const VideoProgressBar = ({
           !userHasFullAccess &&
           currentPlayerTime >= endTime - 0.1
         ) {
-          console.log("Near end time:", {
-            currentTime: currentPlayerTime,
-            endTime,
-            hasShownAccessModal: hasShownAccessModal.current,
-            modalDismissed: modalDismissed.current,
-            hasAccessRef,
-            isVideoOwner,
-          });
+          // console.log("Near end time:", {
+          //   currentTime: currentPlayerTime,
+          //   endTime,
+          //   hasShownAccessModal: hasShownAccessModal.current,
+          //   modalDismissed: modalDismissed.current,
+          //   hasAccessRef,
+          //   isVideoOwner,
+          // });
         }
 
         // Only show modal if user truly doesn't have access to the full content

@@ -368,7 +368,51 @@ export const useComments = ({ videoId }: UseCommentsProps) => {
     }
   }, [token, videoId]);
 
+  const deleteComment = useCallback(async (commentId: string) => {
+    if (!token || !commentId || !videoId) {
+      console.log('❌ Delete comment validation failed:', { token: !!token, commentId, videoId });
+      return;
+    }
 
+    try {
+      console.log('🗑️ Deleting comment:', { commentId, videoId });
+      const result = await commentActions.deleteComment(token, commentId, videoId);
+      console.log('✅ Comment deleted:', result);
+
+      // Remove the comment from the local state
+      setComments(prev => prev.filter(comment => comment._id !== commentId));
+      
+      return result;
+    } catch (err) {
+      console.log('❌ Error deleting comment:', err);
+      throw err;
+    }
+  }, [token, videoId]);
+
+  const deleteReply = useCallback(async (replyId: string, commentId: string) => {
+    if (!token || !replyId || !videoId) {
+      console.log('❌ Delete reply validation failed:', { token: !!token, replyId, videoId });
+      return;
+    }
+
+    try {
+      console.log('🗑️ Deleting reply:', { replyId, videoId });
+      const result = await commentActions.deleteReply(token, replyId, videoId);
+      console.log('✅ Reply deleted:', result);
+
+      // Update the comment's reply count
+      setComments(prev => prev.map(comment =>
+        comment._id === commentId
+          ? { ...comment, replies: Math.max(0, comment.replies - 1) }
+          : comment
+      ));
+      
+      return result;
+    } catch (err) {
+      console.log('❌ Error deleting reply:', err);
+      throw err;
+    }
+  }, [token, videoId]);
 
   return {
     comments,
@@ -382,6 +426,8 @@ export const useComments = ({ videoId }: UseCommentsProps) => {
     fetchReplies,
     upvoteReply,
     downvoteReply,
+    deleteComment,
+    deleteReply,
     isConnected, // WebSocket connection status
   };
 };
