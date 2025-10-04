@@ -448,7 +448,7 @@ const renderGridItem = ({ item, index }: { item: any; index: number }) => (
                         },
                       })
                     }
-                    className="px-4 py-2 rounded-lg border border-white"
+                    className="px-4 py-2 rounded-lg border  border-gray-400 "
                   >
                     <Text className="text-white text-center font-bold">
                       My Community
@@ -460,7 +460,7 @@ const renderGridItem = ({ item, index }: { item: any; index: number }) => (
                     onPress={() =>
                       router.push("/(dashboard)/profile/Dashboard")
                     }
-                    className="px-4 py-2 rounded-lg border border-white" // Use rounded-md for consistency
+                    className="px-4 py-2 rounded-lg border  border-gray-400 " // Use rounded-md for consistency
                   >
                     <Text className="text-white text-center font-bold">
                       Dashboard

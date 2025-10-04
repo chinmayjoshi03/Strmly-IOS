@@ -9,13 +9,13 @@ const throttleRequest = async (key: string) => {
   const lastRequest = requestQueue.get(key) || 0;
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequest;
-  
+
   if (timeSinceLastRequest < THROTTLE_DELAY) {
     const delay = THROTTLE_DELAY - timeSinceLastRequest;
     console.log(`⏳ Throttling request for ${key}, waiting ${delay}ms`);
     await new Promise(resolve => setTimeout(resolve, delay));
   }
-  
+
   requestQueue.set(key, Date.now());
 };
 
@@ -82,7 +82,7 @@ export class CommentAPI {
   ): Promise<CommentAPIResponse> {
     console.log('Posting comment to:', `${CONFIG.API_BASE_URL}/interactions/comment`);
     console.log('Request body:', { videoId, comment: content });
-    
+
     const response = await fetch(
       `${CONFIG.API_BASE_URL}/interactions/comment`,
       {
@@ -103,7 +103,7 @@ export class CommentAPI {
 
     return response.json();
   }
-  
+
 
   // Get replies for a comment
   static async getReplies(
@@ -113,8 +113,8 @@ export class CommentAPI {
     page: number = 1,
     limit: number = 5
   ): Promise<CommentAPIResponse> {
-     console.log('videoId:', videoId);
-  console.log('commentId:', commentId);
+    console.log('videoId:', videoId);
+    console.log('commentId:', commentId);
     const response = await fetch(
       `${CONFIG.API_BASE_URL}/interactions/videos/${videoId}/comments/${commentId}/replies?page=${page}&limit=${limit}`,
       {
@@ -139,7 +139,7 @@ export class CommentAPI {
     if (!videoId) {
       throw new Error('VideoId is required for posting a reply');
     }
-    
+
     const response = await fetch(
       `${CONFIG.API_BASE_URL}/interactions/comments/reply`,
       {
@@ -270,6 +270,63 @@ export class CommentAPI {
     return response.json();
   }
 
+  // Delete a comment
+  static async deleteComment(
+    token: string,
+    commentId: string,
+    videoId: string
+  ): Promise<{ success: boolean; message: string }> {
+    console.log('🗑️ Delete comment request:', { commentId, videoId });
+    
+    const response = await fetch(
+      `${CONFIG.API_BASE_URL}/interactions/comments/delete`,
+      {
+        method: 'DELETE',
+        headers: CommentAPI.getHeaders(token),
+        body: JSON.stringify({
+          commentId,
+          videoId,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Delete comment error response:', errorText);
+      throw new Error(`Failed to delete comment: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
+  }
+
+  // Delete a reply
+  static async deleteReply(
+    token: string,
+    replyId: string,
+    videoId: string
+  ): Promise<{ success: boolean; message: string }> {
+    console.log('🗑️ Delete reply request:', { replyId, videoId });
+    
+    const response = await fetch(
+      `${CONFIG.API_BASE_URL}/interactions/comments/delete`,
+      {
+        method: 'DELETE',
+        headers: CommentAPI.getHeaders(token),
+        body: JSON.stringify({
+          commentId: replyId, // API uses commentId for both comments and replies
+          videoId,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Delete reply error response:', errorText);
+      throw new Error(`Failed to delete reply: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
+  }
 
 }
 
@@ -283,4 +340,6 @@ export const commentActions = {
   downvoteComment: CommentAPI.downvoteComment,
   upvoteReply: CommentAPI.upvoteReply,
   downvoteReply: CommentAPI.downvoteReply,
+  deleteComment: CommentAPI.deleteComment,
+  deleteReply: CommentAPI.deleteReply,
 };

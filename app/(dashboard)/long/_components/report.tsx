@@ -25,12 +25,14 @@ type ReportCategory = {
 
 const REPORT_CATEGORIES: ReportCategory[] = [
   { id: "1", label: "Nudity / Sexual Content", value: "nudity_sexual" },
-  { id: "2", label: "Copyright / Rights Violation", value: "copyright" },
-  { id: "3", label: "Harmful / Violent Content", value: "harmful_violent" },
-  { id: "4", label: "Hate Speech / Harassment", value: "hate_speech" },
-  { id: "5", label: "Spam / Misleading", value: "spam" },
-  { id: "6", label: "Other", value: "other" },
+  { id: "2", label: "Child Exploitation / CSAM", value: "child_exploitation" },
+  { id: "3", label: "Copyright / Rights Violation", value: "copyright" },
+  { id: "4", label: "Harmful / Violent Content", value: "harmful_violent" },
+  { id: "5", label: "Hate Speech / Harassment", value: "hate_speech" },
+  { id: "6", label: "Spam / Misleading", value: "spam" },
+  { id: "7", label: "Other", value: "other" },
 ];
+
 
 const Report = () => {
   const params = useLocalSearchParams<{

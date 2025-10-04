@@ -393,10 +393,7 @@ const Interests = () => {
 
           <Text style={CreateProfileStyles.OptionsCardText}>
             Select only 3 of your interest from
-
             {isCinema ? " \"Cinema content\"" : " \"Non-cinema content\""}
-
-        {isCinema ? " \"Cinema content\"" : " \"Non-cinema content\""}
           </Text>
 
           <View style={{ marginBottom: 30, marginTop: 10 }}>

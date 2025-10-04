@@ -10,7 +10,7 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { ArrowLeft, MoreVertical, Play, Film, User } from "lucide-react-native";
+import { ArrowLeft, Play, Film, User } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -30,8 +30,6 @@ export default function AccessPage() {
   const [activeTab, setActiveTab] = useState<"content" | "series" | "creator">(
     "content"
   );
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [isRemoving, setIsRemoving] = useState<string | null>(null);
 
   const route = useRoute();
   const { routeTab } = route.params as { routeTab: string };
@@ -42,7 +40,6 @@ export default function AccessPage() {
     data: purchasedData,
     isLoading,
     error,
-    removeAsset,
   } = usePurchasedAccess();
 
   useEffect(() => {
@@ -54,41 +51,6 @@ export default function AccessPage() {
       setActiveTab(routeTab);
     }
   }, [routeTab]);
-
-  const handleRemoveAccess = async (
-    id: string,
-    type: "asset" | "creator_pass"
-  ) => {
-    Alert.alert(
-      "Remove Access",
-      `Are you sure you want to remove this ${type === "asset" ? "content" : "creator pass"} from your purchased access?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            setIsRemoving(id);
-            try {
-              await removeAsset(id, type);
-              Alert.alert("Success", "Access removed successfully");
-            } catch (error) {
-              Alert.alert(
-                "Error",
-                "Failed to remove access. Please try again."
-              );
-            } finally {
-              setIsRemoving(null);
-              setActiveDropdown(null);
-            }
-          },
-        },
-      ]
-    );
-  };
 
   const formatDate = (dateString: string) => {
     try {
@@ -200,10 +162,9 @@ export default function AccessPage() {
         
         router.push({
           pathname: "/(dashboard)/long/GlobalVideoPlayer",
-          pathname: "/(dashboard)/long/GlobalVideoPlayer",
           params: {
-            videoType: 'video',
-            startIndex: '0'
+            videoType: "video",
+            startIndex: "0",
           },
         });
       } catch (error) {
@@ -226,26 +187,32 @@ export default function AccessPage() {
     }
   };
 
-
-
-// 1. Change the LinearGradient in renderAssetItem to match iOS layout
-const renderAssetItem = (asset: Asset) => (
-  <View key={asset._id} className={Platform.OS == 'ios' ? "mb-4" : "mb-3"}>
-    <TouchableOpacity
-      onPress={() => handleAssetClick(asset)}
-      activeOpacity={0.7}
-    >
-      <LinearGradient
-        colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        className={Platform.OS === 'ios' ? "p-4 rounded-lg " : "flex-row items-center p-4 rounded-lg mb-3"}
+  const renderAssetItem = (asset: Asset) => (
+    <View key={asset._id} className={Platform.OS == 'ios' ? "mb-4" : "mb-3"}>
+      <TouchableOpacity
+        onPress={() => handleAssetClick(asset)}
+        activeOpacity={0.7}
+        style={{
+          borderRadius: 7,
+          borderColor:"#262525ff",
+          borderWidth:1
+        }}
       >
-        {/* iOS Layout */}
-        {Platform.OS === 'ios' ? (
-          <View className="flex-row items-start">
-            <View className="relative">
-             <Image
+        <LinearGradient
+          colors={["#000000", "#000000", "#000000"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className={Platform.OS === 'ios' ? "p-4 rounded-lg " : "flex-row items-center p-4 rounded-lg mb-3"}
+          style={{
+            borderRadius: 10,
+            borderColor:"#262525ff"
+          }}
+        >
+          {/* iOS Layout */}
+          {Platform.OS === 'ios' ? (
+            <View className="flex-row items-center"> {/* Changed from items-start to items-center */}
+              <View className="relative">
+                <Image
                   source={{
                     uri:
                       asset.asset_data?.thumbnailUrl ||
@@ -258,17 +225,17 @@ const renderAssetItem = (asset: Asset) => (
                   className="w-20 h-14 rounded-lg"
                   resizeMode="cover"
                 />
-              {/* Content type indicator */}
-              <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
-                {asset.content_type === "video" ? (
-                  <Play size={12} color="white" fill="white" />
-                ) : (
-                  <Film size={12} color="white" />
-                )}
+                {/* Content type indicator */}
+                <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
+                  {asset.content_type === "video" ? (
+                    <Play size={12} color="white" fill="white" />
+                  ) : (
+                    <Film size={12} color="white" />
+                  )}
+                </View>
               </View>
-            </View>
-            <View className="flex-1 ml-3">
-              <Text className="text-white font-medium text-lg mb-1">
+              <View className="flex-1 ml-3">
+                <Text className="text-white font-medium text-lg mb-1">
                   {asset.asset_data?.title || asset.asset_data?.name || "Untitled"}
                 </Text>
                 <Text className="text-blue-400 font-medium text-sm mb-1">
@@ -280,109 +247,70 @@ const renderAssetItem = (asset: Asset) => (
                         ? ` • ${asset.asset_data.episodes.length} episodes`
                         : "")}
                 </Text>
-              <Text className="text-gray-400 text-sm mb-0.5">
-                Purchase on {formatDate(asset.granted_at)}
-              </Text>
-            {asset.asset_data?.created_by && (
-  <Text className="text-gray-500 text-xs">
-    by @{asset.asset_data.created_by.username}
-  </Text>
-)}
-            </View>
-            <TouchableOpacity
-              className="p-2"
-              onPress={(e) => {
-                e.stopPropagation();
-                setActiveDropdown(
-                  activeDropdown === asset._id ? null : asset._id
-                );
-              }}
-            >
-              <MoreVertical size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          /* Android Layout (existing) */
-          <>
-            <View className="relative">
-              <Image
-                source={{
-                  uri:
-                    asset.asset_data.thumbnailUrl ||
-                    asset.asset_data.posterUrl ||
-                    asset.asset_data.bannerUrl ||
-                    (asset.asset_data.episodes &&
-                      asset.asset_data.episodes[0]?.thumbnailUrl) ||
-                    "https://images.unsplash.com/photo-1489599735734-79b4169c2a78?w=100&h=100&fit=crop",
-                }}
-                className="w-16 h-16 rounded-lg"
-                resizeMode="cover"
-              />
-              <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
-                {asset.content_type === "video" ? (
-                  <Play size={12} color="white" fill="white" />
-                ) : (
-                  <Film size={12} color="white" />
+                <Text className="text-gray-400 text-sm mb-0.5">
+                  Purchase on {formatDate(asset.granted_at)}
+                </Text>
+                {asset.asset_data?.created_by && (
+                  <Text className="text-gray-500 text-xs">
+                    by @{asset.asset_data.created_by.username}
+                  </Text>
                 )}
               </View>
             </View>
-            <View className="flex-1 ml-3">
-              <Text className="text-white font-medium text-base">
-                {asset.asset_data.title || asset.asset_data.name || "Untitled"}
-              </Text>
-              <Text className="text-gray-400 text-sm mt-1">
-                <Text className="text-blue-400 font-medium">
-                  {asset.content_type === "video" ? "Video" : "Series"}
+          ) : (
+            /* Android Layout */
+            <View className="flex-row items-center"> {/* Added wrapper with items-center */}
+              <View className="relative">
+                <Image
+                  source={{
+                    uri:
+                      asset.asset_data.thumbnailUrl ||
+                      asset.asset_data.posterUrl ||
+                      asset.asset_data.bannerUrl ||
+                      (asset.asset_data.episodes &&
+                        asset.asset_data.episodes[0]?.thumbnailUrl) ||
+                      "https://images.unsplash.com/photo-1489599735734-79b4169c2a78?w=100&h=100&fit=crop",
+                  }}
+                  className="w-16 h-16 rounded-lg"
+                  resizeMode="cover"
+                />
+                <View className="absolute -top-1 -right-1 bg-blue-600 rounded-full p-1">
+                  {asset.content_type === "video" ? (
+                    <Play size={12} color="white" fill="white" />
+                  ) : (
+                    <Film size={12} color="white" />
+                  )}
+                </View>
+              </View>
+              <View className="flex-1 ml-3">
+                <Text className="text-white font-medium text-base">
+                  {asset.asset_data.title || asset.asset_data.name || "Untitled"}
                 </Text>
-                {asset.content_type === "series" &&
-                  (asset.asset_data.total_episodes
-                    ? ` • ${asset.asset_data.total_episodes} episodes`
-                    : asset.asset_data.episodes
-                      ? ` • ${asset.asset_data.episodes.length} episodes`
-                      : "")}
-                {"\n"}Purchase on {formatDate(asset.granted_at)}
-                {asset.asset_data.created_by && (
-                  <Text className="text-gray-500 text-xs">
-                    {"\n"}by @{asset.asset_data.created_by.username}
+                <Text className="text-gray-400 text-sm mt-1">
+                  <Text className="text-blue-400 font-medium">
+                    {asset.content_type === "video" ? "Video" : "Series"}
                   </Text>
-                )}
-              </Text>
+                  {asset.content_type === "series" &&
+                    (asset.asset_data.total_episodes
+                      ? ` • ${asset.asset_data.total_episodes} episodes`
+                      : asset.asset_data.episodes
+                        ? ` • ${asset.asset_data.episodes.length} episodes`
+                        : "")}
+                  {"\n"}Purchase on {formatDate(asset.granted_at)}
+                  {asset.asset_data.created_by && (
+                    <Text className="text-gray-500 text-xs">
+                      {"\n"}by @{asset.asset_data.created_by.username}
+                    </Text>
+                  )}
+                </Text>
+              </View>
             </View>
-            <TouchableOpacity
-              className="p-2"
-              onPress={(e) => {
-                e.stopPropagation();
-                setActiveDropdown(
-                  activeDropdown === asset._id ? null : asset._id
-                );
-              }}
-            >
-              <MoreVertical size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-          </>
-        )}
-      </LinearGradient>
-    </TouchableOpacity>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
 
-    {/* Dropdown Menu positioning */}
-    {activeDropdown === asset._id && (
-      <View
-        className={`absolute ${Platform.OS === 'ios' ? 'right-4 top-8' : 'right-4 top-16'} rounded-lg border border-gray-700 z-10 min-w-32`}
-        style={{ backgroundColor: "#6B7280" }}
-      >
-        <TouchableOpacity
-          className="px-4 py-3"
-          onPress={() => handleRemoveAccess(asset._id, "asset")}
-          disabled={isRemoving === asset._id}
-        >
-          <Text style={{ color: "#FFFFFF" }} className="font-medium">
-            {isRemoving === asset._id ? "Removing..." : "Remove"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    )}
-  </View>
-);
   const handleCreatorClick = (creatorPass: CreatorPass) => {
     try {
       // Navigate to creator's public profile page
@@ -435,23 +363,6 @@ const renderAssetItem = (asset: Asset) => (
             {"\n"}Access till {formatDate(creatorPass.end_date)}
           </Text>
         </View>
-        {/* <TouchableOpacity
-          onPress={(e) => {
-            e.stopPropagation(); // Prevent triggering the creator click
-            handleRemoveAccess(creatorPass._id, "creator_pass");
-          }}
-          disabled={isRemoving === creatorPass._id}
-          className="px-2 py-1 rounded-lg border border-white"
-          style={{
-            backgroundColor: "transparent",
-            borderColor: "#FFFFFF",
-            borderWidth: 1,
-          }}
-        >
-          <Text className="text-white font-medium text-sm">
-            {isRemoving === creatorPass._id ? "Removing..." : "Remove"}
-          </Text>
-        </TouchableOpacity> */}
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -479,72 +390,66 @@ const renderAssetItem = (asset: Asset) => (
 
         {/* Content */}
         <ScrollView className="flex-1 px-4">
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => setActiveDropdown(null)}
-            className="flex-1"
-          >
-            {isLoading ? (
-              <View className="flex-1 items-center justify-center mt-20">
-                <ActivityIndicator size="large" color="#F1C40F" />
-                <Text className="text-gray-400 mt-4">
-                  Loading your purchases...
-                </Text>
-              </View>
-            ) : error ? (
-              <View className="flex-1 items-center justify-center mt-20 px-4">
-                <Text className="text-red-400 text-center mb-4">
-                  Failed to load purchased access
-                </Text>
-                <Text className="text-gray-400 text-center text-sm mb-4">
-                  {error}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => window.location.reload()}
-                  className="bg-blue-600 px-4 py-2 rounded-lg"
-                >
-                  <Text className="text-white">Retry</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              (() => {
-                const filteredData = getFilteredData();
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center mt-20">
+              <ActivityIndicator size="large" color="#F1C40F" />
+              <Text className="text-gray-400 mt-4">
+                Loading your purchases...
+              </Text>
+            </View>
+          ) : error ? (
+            <View className="flex-1 items-center justify-center mt-20 px-4">
+              <Text className="text-red-400 text-center mb-4">
+                Failed to load purchased access
+              </Text>
+              <Text className="text-gray-400 text-center text-sm mb-4">
+                {error}
+              </Text>
+              <TouchableOpacity
+                onPress={() => window.location.reload()}
+                className="bg-blue-600 px-4 py-2 rounded-lg"
+              >
+                <Text className="text-white">Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            (() => {
+              const filteredData = getFilteredData();
 
-                return filteredData.length > 0 ? (
-                  filteredData.map((item: any) =>
-                    activeTab === "creator"
-                      ? renderCreatorPassItem(item)
-                      : renderAssetItem(item)
-                  )
-                ) : (
-                  <View className="flex-1 items-center justify-center mt-20 px-4">
-                    <View className="items-center">
-                      {activeTab === "content" && (
-                        <Play size={48} color="#6B7280" />
-                      )}
-                      {activeTab === "series" && (
-                        <Film size={48} color="#6B7280" />
-                      )}
-                      {activeTab === "creator" && (
-                        <User size={48} color="#6B7280" />
-                      )}
-                      <Text className="text-gray-400 text-center mt-4 text-lg">
-                        No purchased {activeTab} found
-                      </Text>
-                      <Text className="text-gray-500 text-center mt-2 text-sm">
-                        {activeTab === "content" &&
-                          "Purchase individual videos to see them here"}
-                        {activeTab === "series" &&
-                          "Purchase series to see them here"}
-                        {activeTab === "creator" &&
-                          "Purchase creator passes to see them here"}
-                      </Text>
-                    </View>
+              return filteredData.length > 0 ? (
+                filteredData.map((item: any) =>
+                  activeTab === "creator"
+                    ? renderCreatorPassItem(item)
+                    : renderAssetItem(item)
+                )
+              ) : (
+                <View className="flex-1 items-center justify-center mt-20 px-4">
+                  <View className="items-center">
+                    {activeTab === "content" && (
+                      <Play size={48} color="#6B7280" />
+                    )}
+                    {activeTab === "series" && (
+                      <Film size={48} color="#6B7280" />
+                    )}
+                    {activeTab === "creator" && (
+                      <User size={48} color="#6B7280" />
+                    )}
+                    <Text className="text-gray-400 text-center mt-4 text-lg">
+                      No purchased {activeTab} found
+                    </Text>
+                    <Text className="text-gray-500 text-center mt-2 text-sm">
+                      {activeTab === "content" &&
+                        "Purchase individual videos to see them here"}
+                      {activeTab === "series" &&
+                        "Purchase series to see them here"}
+                      {activeTab === "creator" &&
+                        "Purchase creator passes to see them here"}
+                    </Text>
                   </View>
-                );
-              })()
-            )}
-          </TouchableOpacity>
+                </View>
+              );
+            })()
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>

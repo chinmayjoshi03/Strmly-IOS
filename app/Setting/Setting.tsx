@@ -13,11 +13,9 @@ import ThemedView from "@/components/ThemedView";
 import ProfileTopbar from "@/components/profileTopbar";
 import ActionModal from "./_component/customModal";
 import { useAuthStore } from "@/store/useAuthStore";
-// Make sure this import matches your store export
 import { useMonetizationStore } from "@/store/useMonetizationStore";
-import { router, useNavigation } from "expo-router";
+import { useNavigation } from "expo-router";
 import Constants from "expo-constants";
-import { NativeStackNavigationProp } from "react-native-screens/lib/typescript/native-stack/types";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { height } = Dimensions.get("window");
@@ -47,7 +45,7 @@ const Setting = () => {
     loading: isMonetizationLoading,
   } = monetizationHook;
 
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const navigation = useNavigation<any>();
 
   const BACKEND_API_URL = Constants.expoConfig?.extra?.BACKEND_API_URL;
 
@@ -63,7 +61,7 @@ const Setting = () => {
     confirmRequest: "",
   });
 
-  const openModal = (config) => {
+  const openModal = (config: any) => {
     setModalConfig({ ...config, isVisible: true });
   };
 
@@ -88,7 +86,7 @@ const Setting = () => {
       setTimeout(() => {
         fetchMonetizationStatus(token, true);
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Settings: Failed to toggle monetization:", error);
       Alert.alert(
         "Error",
@@ -112,33 +110,76 @@ const Setting = () => {
     });
   };
 
-  const handleDeleteAccount = async () => {
+  const [deleteStep, setDeleteStep] = useState(0); // 0: initial, 1: first warning, 2: second warning, 3: delete
+
+  // Start the delete process - show first warning
+  const startDeleteProcess = () => {
+    setDeleteStep(1);
+    openModal(modalTypes.deleteWarning1);
+  };
+
+  // Handle first warning confirmation - show second warning
+  const handleFirstWarningConfirm = () => {
+    setDeleteStep(2);
+    closeModal();
+    setTimeout(() => {
+      openModal(modalTypes.deleteWarning2);
+    }, 100);
+  };
+
+  // Actually delete the account
+  const handleFinalDelete = async () => {
     try {
-      const response = await fetch(`${BACKEND_API_URL}/caution/request-account-deletion`, {
-        method: "POST",
+      console.log("🗑️ Starting account deletion...");
+
+      const response = await fetch(`${BACKEND_API_URL}/caution/profile`, {
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to submit deletion request.");
+        throw new Error(data.message || "Failed to delete account.");
       }
 
+      console.log("✅ Account deleted successfully");
+
+      // Clear auth data and navigate to sign up/sign in
+      logout();
+
       Alert.alert(
-        "Account Deletion Initiated",
-        "Your account deletion request has been submitted successfully.",
-        [{ text: "OK" }]
+        "Account Deleted",
+        "Your account has been permanently deleted.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.reset({
+                routes: [{ name: "(auth)/Sign-up" }],
+              });
+            },
+          },
+        ]
       );
-    } catch (error) {
+    } catch (error: any) {
+      console.error("❌ Account deletion failed:", error);
       Alert.alert(
         "Deletion Error",
-        error.message || "An unexpected error occurred."
+        error.message || "An unexpected error occurred while deleting your account."
       );
+    } finally {
+      setDeleteStep(0);
       closeModal();
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteStep(0);
+    closeModal();
   };
 
   const openURL = async (url: any) => {
@@ -172,22 +213,21 @@ const Setting = () => {
       onPrimaryButtonPress: handleLogout,
       secondaryButtonText: "Cancel",
     },
-    delete: {
-      title: `Before sending this request, ensure that your Creator Pass has been deactivated for at least one month, and you have transferred ownership of all your communities. After submitting the request, you must not monetize new content, series, comments, or create new communities. If you do, your request will be denied.
-
-The review process takes 2–4 days. During this time, you can still access your account, but certain actions like monetization creation will be restricted.
-
-Once approved, the "Delete Account" button will be activated in your settings. After deletion, all your personal data will be permanently removed. Your monetized content will remain accessible only to users who have already paid, but it will be unpublished and hidden from others.
-
-By submitting this request, you confirm that you understand and agree to our`,
-      confirmRequest:
-        "Are you sure you want to send request to activate  ? This action is irreversible and cannot be undone.",
+    deleteWarning1: {
+      title: "⚠️ FIRST WARNING ⚠️\n\nYou are about to permanently delete your account. This action will:\n\n• Remove all your personal data permanently\n• Delete all your content and videos\n• Cancel all active subscriptions\n• Remove access to all purchased content\n\nThis action CANNOT be undone.",
       useButtons: true,
-      specialText: true,
-      primaryButtonText: "Agree",
-      onPrimaryButtonPress: handleDeleteAccount,
+      primaryButtonText: "Continue",
+      onPrimaryButtonPress: handleFirstWarningConfirm,
       secondaryButtonText: "Cancel",
-      info: "Delete",
+      onSecondaryButtonPress: handleDeleteCancel,
+    },
+    deleteWarning2: {
+      title: "🚨 FINAL WARNING 🚨\n\nThis is your LAST CHANCE to cancel!\n\nOnce you proceed:\n• Your account will be PERMANENTLY deleted\n• All data will be IRREVERSIBLY lost\n• You will be logged out immediately\n• You cannot recover your account\n\nAre you absolutely sure you want to delete your account?",
+      useButtons: true,
+      primaryButtonText: "Delete",
+      onPrimaryButtonPress: handleFinalDelete,
+      secondaryButtonText: "Cancel",
+      onSecondaryButtonPress: handleDeleteCancel,
     },
   };
 
@@ -200,7 +240,7 @@ By submitting this request, you confirm that you understand and agree to our`,
 
         <View className="mt-4 items-start mx-5 gap-5 w-full">
           {/* Monetization Toggle */}
-         <View className="flex-row items-center justify-between w-full">
+          <View className="flex-row items-center justify-between w-full">
             {/* <Text className="text-white text-lg">
               Activate comment monetization
             </Text> */}
@@ -253,7 +293,10 @@ By submitting this request, you confirm that you understand and agree to our`,
           </Pressable>
 
           <Pressable
-            onPress={() => openModal(modalTypes.delete)}
+            onPress={() => {
+              setDeleteStep(0);
+              startDeleteProcess();
+            }}
             className="w-full"
           >
             <Text className="text-red-500 text-lg">Delete Account</Text>

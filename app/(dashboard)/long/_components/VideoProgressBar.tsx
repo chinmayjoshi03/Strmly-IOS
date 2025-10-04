@@ -7,10 +7,13 @@ import {
   Text,
   Pressable,
   Alert,
+  Platform,
 } from "react-native";
 import { VideoPlayer } from "expo-video";
 import { useAuthStore } from "@/store/useAuthStore";
 import Constants from "expo-constants";
+import { router } from "expo-router";
+import { useGiftingStore } from "@/store/useGiftingStore";
 
 const PROGRESS_BAR_HEIGHT = 4; // Thicker progress bar like YouTube/TikTok
 const KNOB_SIZE = 14;
@@ -40,6 +43,23 @@ type Props = {
   showBuyOption: React.Dispatch<React.SetStateAction<boolean>>;
   isGlobalPlayer?: boolean;
   accessVersion?: number;
+  // Additional props for purchase navigation
+  videoData?: {
+    _id: string;
+    name: string;
+    amount: number;
+    created_by: {
+      _id: string;
+      username: string;
+      name?: string;
+      profile_photo: string;
+    };
+    series?: {
+      _id: string;
+      type: string;
+      price?: number;
+    } | null;
+  };
 };
 
 const formatTime = (seconds: number) => {
@@ -63,6 +83,7 @@ const VideoProgressBar = ({
   haveCreator,
   isGlobalPlayer = false,
   accessVersion,
+  videoData,
 }: Props) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -83,10 +104,10 @@ const VideoProgressBar = ({
   const modalDismissed = useRef(false);
   const initialSeekTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasUserInteracted = useRef(false);
-  
+
   // Add persistent interval ref to prevent cleanup issues
-  const timeTrackingInterval = useRef<NodeJS.Timeout | null>(null);
-  
+  const timeTrackingInterval = useRef<NodeJS.Timeout | number | null>(null);
+
   // Add component mounted ref to handle cleanup properly
   const isMounted = useRef(true);
 
@@ -158,9 +179,19 @@ const VideoProgressBar = ({
 
   // ✅ Perform initial seek when video is ready
   useEffect(() => {
-    if (!isVideoReady || hasPerformedInitialSeek || !isActive || initialStartTime <= 0) {
+    if (
+      !isVideoReady ||
+      hasPerformedInitialSeek ||
+      !isActive ||
+      initialStartTime <= 0
+    ) {
       // If no start time, mark as complete immediately
-      if (isVideoReady && !hasPerformedInitialSeek && isActive && initialStartTime <= 0) {
+      if (
+        isVideoReady &&
+        !hasPerformedInitialSeek &&
+        isActive &&
+        initialStartTime <= 0
+      ) {
         setHasPerformedInitialSeek(true);
         onInitialSeekComplete?.();
       }
@@ -175,23 +206,28 @@ const VideoProgressBar = ({
     // Delay the initial seek slightly to ensure video is fully ready
     initialSeekTimeout.current = setTimeout(() => {
       try {
-          if (player.currentTime !== initialStartTime && player.currentTime > 0) {
-      console.log(`User has already seeked to ${player.currentTime}s, skipping initial seek`);
-      setHasPerformedInitialSeek(true);
-      onInitialSeekComplete?.();
-      return;
-    }
-        
-        console.log(`Performing initial seek to ${initialStartTime}s for video ${videoId}`);
-        
+        if (player.currentTime !== initialStartTime && player.currentTime > 0) {
+          console.log(
+            `User has already seeked to ${player.currentTime}s, skipping initial seek`
+          );
+          setHasPerformedInitialSeek(true);
+          onInitialSeekComplete?.();
+          return;
+        }
+
+        console.log(
+          `Performing initial seek to ${initialStartTime}s for video ${videoId}`
+        );
+
         // Seek to start time
         player.currentTime = initialStartTime;
         setCurrentTime(initialStartTime);
-        
+
         setHasPerformedInitialSeek(true);
         onInitialSeekComplete?.();
-        console.log(`Video ${videoId} seeked to start time ${initialStartTime}s`);
-        
+        console.log(
+          `Video ${videoId} seeked to start time ${initialStartTime}s`
+        );
       } catch (seekError) {
         console.error("Error performing initial seek:", seekError);
         setHasPerformedInitialSeek(true); // Mark as done to prevent retry
@@ -205,7 +241,15 @@ const VideoProgressBar = ({
         initialSeekTimeout.current = null;
       }
     };
-  }, [isVideoReady, hasPerformedInitialSeek, isActive, initialStartTime, player, videoId, onInitialSeekComplete]);
+  }, [
+    isVideoReady,
+    hasPerformedInitialSeek,
+    isActive,
+    initialStartTime,
+    player,
+    videoId,
+    onInitialSeekComplete,
+  ]);
 
   // ✅ Reset state when video changes
   useEffect(() => {
@@ -215,7 +259,7 @@ const VideoProgressBar = ({
     modalDismissed.current = false;
     setShowAccessModal(false);
     setCurrentTime(0);
-    
+
     return () => {
       if (initialSeekTimeout.current) {
         clearTimeout(initialSeekTimeout.current);
@@ -283,7 +327,7 @@ const VideoProgressBar = ({
   // ✅ Track 2% milestone (adjusted for start time)
   const hasTriggered2Percent = useRef(false);
   useEffect(() => {
-  if (!isActive || duration <= 0 || !hasPerformedInitialSeek) return;
+    if (!isActive || duration <= 0 || !hasPerformedInitialSeek) return;
 
     // Determine if this is a free video or premium video
     const isFreeVideo =
@@ -347,10 +391,10 @@ const VideoProgressBar = ({
       timeTrackingInterval.current = null;
     }
 
-  // Only start tracking if video is active and ready
-  if (!isActive || !player) {
-    return;
-  }
+    // Only start tracking if video is active and ready
+    if (!isActive || !player) {
+      return;
+    }
 
     console.log(
       "Starting time tracking for video:",
@@ -359,17 +403,19 @@ const VideoProgressBar = ({
       hasAccessRef.current
     );
 
-  // Start continuous time tracking
-  timeTrackingInterval.current = setInterval(() => {
-    if (!isMounted.current || !player) {
-      return;
-    }
+    // Start continuous time tracking
+    timeTrackingInterval.current = setInterval(() => {
+      if (!isMounted.current || !player) {
+        return;
+      }
 
       try {
         const currentPlayerTime = player.currentTime || 0;
 
-        // Always update current time, regardless of UI visibility
-        setCurrentTime(currentPlayerTime);
+        // iOS Fix: Only update UI time if not currently dragging to prevent conflicts
+        if (!isDragging) {
+          setCurrentTime(currentPlayerTime);
+        }
 
         // Check if video has reached the end time and user doesn't have access
         const isPremiumVideo = endTime < duration && endTime > 0;
@@ -385,14 +431,14 @@ const VideoProgressBar = ({
           !userHasFullAccess &&
           currentPlayerTime >= endTime - 0.1
         ) {
-          console.log("Near end time:", {
-            currentTime: currentPlayerTime,
-            endTime,
-            hasShownAccessModal: hasShownAccessModal.current,
-            modalDismissed: modalDismissed.current,
-            hasAccessRef,
-            isVideoOwner,
-          });
+          // console.log("Near end time:", {
+          //   currentTime: currentPlayerTime,
+          //   endTime,
+          //   hasShownAccessModal: hasShownAccessModal.current,
+          //   modalDismissed: modalDismissed.current,
+          //   hasAccessRef,
+          //   isVideoOwner,
+          // });
         }
 
         // Only show modal if user truly doesn't have access to the full content
@@ -420,7 +466,7 @@ const VideoProgressBar = ({
       } catch (error) {
         console.error("Error in time tracking:", error);
       }
-    }, 250);
+    }, Platform.OS === 'ios' ? 100 : 250); // iOS gets more frequent updates
 
     return () => {
       if (timeTrackingInterval.current) {
@@ -437,6 +483,7 @@ const VideoProgressBar = ({
     endTime,
     duration,
     videoId,
+    isDragging, // iOS Fix: Include dragging state to restart interval after drag
   ]);
 
   // Reset modal state when video changes or becomes inactive
@@ -447,6 +494,25 @@ const VideoProgressBar = ({
       setShowAccessModal(false);
     }
   }, [isActive, videoId]);
+
+  // Platform-specific: Force time synchronization after drag ends
+  useEffect(() => {
+    if (!isDragging && player && isActive) {
+      // iOS needs more time for seek operations to complete
+      const syncDelay = Platform.OS === 'ios' ? 200 : 50;
+      const syncTimeout = setTimeout(() => {
+        if (isMounted.current && player) {
+          const actualTime = player.currentTime || 0;
+          setCurrentTime(actualTime);
+          if (Platform.OS === 'ios') {
+            console.log("iOS post-drag sync - actualTime:", actualTime);
+          }
+        }
+      }, syncDelay);
+
+      return () => clearTimeout(syncTimeout);
+    }
+  }, [isDragging, player, isActive]);
   useEffect(() => {
     // Reset modal states when video is back at or near the start time
     if (currentTime <= initialStartTime + 0.5) {
@@ -488,6 +554,45 @@ const VideoProgressBar = ({
     });
   };
 
+  const handleShowPaidButton = () => {
+    handleAccessModalClose();
+    
+    if (!videoData) {
+      // Fallback to showing buy option if video data is not available
+      showBuyOption(true);
+      return;
+    }
+
+    const { initiateGifting } = useGiftingStore.getState();
+    
+    // Initialize gifting store with video data
+    initiateGifting(videoData.created_by, videoData._id);
+
+    // Determine purchase flow based on video type and series
+    const series = videoData.series;
+    const videoAmount = videoData.amount || access.price || 0;
+    
+    if (series && series.type !== "Free") {
+      // Navigate to series purchase
+      router.push({
+        pathname: "/(dashboard)/PurchasePass/PurchaseSeries/[id]",
+        params: { id: series._id },
+      });
+    } else if (videoAmount > 0) {
+      // Navigate to individual video purchase
+      router.push({
+        pathname: "/(dashboard)/PurchasePass/PurchaseVideo/[id]",
+        params: { id: videoData._id },
+      });
+    } else {
+      // Navigate to creator pass purchase as fallback
+      router.push({
+        pathname: "/(dashboard)/PurchasePass/PurchaseCreatorPass/[id]",
+        params: { id: videoData.created_by._id },
+      });
+    }
+  };
+
   // ✅ Validate seek position based on access permissions
   const validateSeekTime = (newTimeSeconds: number): boolean => {
     // If user is the video owner, allow seeking anywhere
@@ -495,7 +600,7 @@ const VideoProgressBar = ({
     if (isVideoOwner) {
       return true;
     }
-    
+
     // Determine if this is a free video (no restrictions) or premium video
     const isFreeVideo =
       access?.accessType === "free" ||
@@ -515,24 +620,24 @@ const VideoProgressBar = ({
     if (isFreeVideo) {
       return true;
     }
-    
+
     // For premium videos with access (purchased or creator pass): allow seeking anywhere
     if (userHasAccess || hasCreatorPassOfVideoOwner) {
       return true;
     }
-    
+
     // For premium videos without access: only allow seeking within free range (start_time to display_till_time)
     if (!userHasAccess && !hasCreatorPassOfVideoOwner) {
       // Check if trying to seek before start time
       if (initialStartTime > 0 && newTimeSeconds < initialStartTime) {
         Alert.alert(
-          "Content Access Required", 
+          "Content Access Required",
           "You need to purchase this content to access the full video.",
           [{ text: "OK" }]
         );
         return false;
       }
-      
+
       // Check if trying to seek beyond end time
       if (endTime > 0 && endTime < duration && newTimeSeconds > endTime) {
         Alert.alert(
@@ -554,7 +659,7 @@ const VideoProgressBar = ({
       onPanResponderGrant: () => {
         setIsDragging(true);
         hasUserInteracted.current = true;
-        console.log('Drag started, current time:', currentTime);
+        console.log("Drag started, current time:", currentTime);
       },
       onPanResponderMove: (_, gestureState) => {
         const containerWidth = progressBarContainerWidth.current;
@@ -572,20 +677,50 @@ const VideoProgressBar = ({
         const finalTime = dragTimeRef.current;
         if (finalTime != null && validateSeekTime(finalTime)) {
           try {
-            console.log("Seeking from", currentTime, "to:", finalTime, "for video:", videoId);
-            
+            console.log(
+              "Seeking from",
+              currentTime,
+              "to:",
+              finalTime,
+              "for video:",
+              videoId
+            );
+
+            // Pause the player first
             player.pause();
-            player.currentTime = finalTime;
             
+            // iOS-specific: More robust seek operation
+            if (Platform.OS === 'ios') {
+              // On iOS, sometimes we need to pause briefly before seeking
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            // Set the new time
+            player.currentTime = finalTime;
+
             // Immediately update local state to prevent UI lag
             setCurrentTime(finalTime);
-            
-            // Small delay before resuming playback for smooth transition
+
+            // Platform-specific handling for seek operations
+            const seekDelay = Platform.OS === 'ios' ? 150 : 50;
             setTimeout(() => {
               if (isMounted.current && player) {
+                if (Platform.OS === 'ios') {
+                  // iOS-specific: Double-check that the seek actually happened
+                  const actualTime = player.currentTime || 0;
+                  if (Math.abs(actualTime - finalTime) > 0.5) {
+                    // If seek didn't work properly, try again
+                    console.log("iOS seek verification failed, retrying...", {
+                      expected: finalTime,
+                      actual: actualTime
+                    });
+                    player.currentTime = finalTime;
+                    setCurrentTime(finalTime);
+                  }
+                }
                 player.play();
               }
-            }, 50);
+            }, seekDelay);
           } catch (error) {
             console.error("Error seeking video:", error);
           }
@@ -599,7 +734,8 @@ const VideoProgressBar = ({
 
   // ✅ FIXED: Better progress calculation that handles edge cases
   const effectiveTime = isDragging && dragTime != null ? dragTime : currentTime;
-  const progress = duration > 0 ? Math.max(0, Math.min(effectiveTime / duration, 1)) : 0;
+  const progress =
+    duration > 0 ? Math.max(0, Math.min(effectiveTime / duration, 1)) : 0;
 
   if (duration <= 0) return null;
 
@@ -623,17 +759,17 @@ const VideoProgressBar = ({
       >
         {/* Background bar */}
         <View style={styles.progressBarBackground} />
-        
+
         {/* Show start time indicator */}
         {initialStartTime > 0 && (
-          <View 
+          <View
             style={[
-              styles.startTimeIndicator, 
-              { left: `${startProgress * 100}%` }
-            ]} 
+              styles.startTimeIndicator,
+              { left: `${startProgress * 100}%` },
+            ]}
           />
         )}
-        
+
         {/* Show restricted area if user doesn't have access and it's not a free video */}
         {!hasAccessRef.current &&
           !isVideoOwner &&
@@ -684,14 +820,23 @@ const VideoProgressBar = ({
             <Text style={styles.accessModalText}>
               🔒 Premium Content
               {"\n\n"}
-              You've reached the end of the free preview. Purchase this content to watch the full video and unlock all features.
+              You've reached the end of the free preview. Purchase this content
+              to watch the full video and unlock all features.
             </Text>
-            <Pressable
-              onPress={handleAccessModalClose}
-              style={styles.accessModalButton}
-            >
-              <Text style={styles.accessModalButtonText}>Got it</Text>
-            </Pressable>
+            <View className="items-center justify-center pr-[10%] gap-5 w-full flex-row">
+              <Pressable
+                onPress={handleAccessModalClose}
+                style={styles.accessModalButton}
+              >
+                <Text style={styles.accessModalButtonText}>Got it</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleShowPaidButton}
+                style={styles.accessModalButton}
+              >
+                <Text style={styles.accessModalButtonText}>Buy</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       )}
@@ -806,6 +951,7 @@ export default React.memo(VideoProgressBar, (prev, next) => {
     prev.videoId === next.videoId &&
     prev.player === next.player &&
     prev.isVideoOwner === next.isVideoOwner &&
-    JSON.stringify(prev.access) === JSON.stringify(next.access)
+    JSON.stringify(prev.access) === JSON.stringify(next.access) &&
+    JSON.stringify(prev.videoData) === JSON.stringify(next.videoData)
   );
 });

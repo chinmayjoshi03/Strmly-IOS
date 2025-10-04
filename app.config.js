@@ -6,9 +6,7 @@ export default {
     slug: "strmly",
     scheme: "strmly",
     owner: "strmly-technologies",
-
     version: "1.0.6",
-    
     orientation: "portrait",
     icon: "./assets/images/logo3.jpg",
     userInterfaceStyle: "dark",
@@ -31,7 +29,8 @@ export default {
     ios: {
         bundleIdentifier: "com.anonymous.strmly",
         infoPlist: {
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: false,
+         UIBackgroundModes: []
       }
     },
     web: {
@@ -54,7 +53,7 @@ export default {
       [
         "expo-video",
         {
-          supportsBackgroundPlayback: true,
+          supportsBackgroundPlayback: false,
           supportsPictureInPicture: true
         }
       ],

@@ -31,7 +31,7 @@ interface AddMoneyModalProps {
   onError?: (error: Error) => void;
 }
 
-const quickAmounts = [10, 50, 100, 200, 500];
+const quickAmounts = [10];
 
 const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
   visible,
@@ -58,7 +58,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
   const handleAddMoney = async () => {
     const validation = validateAmount(amount);
     if (!validation.isValid) {
-      //Alert.alert("Error", validation.error);
+      Alert.alert("Error", validation.error);
       return;
     }
 
@@ -116,22 +116,6 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
         throw verificationError;
       }
 
-      // await onVerifyPayment(
-      //   "TEST_ORDER_ID",
-      //   "add_money_to_wallet_10",
-      //   "TEST_RECEIPT_OR_TOKEN",
-      //   numAmount
-      // );
-
-      try {
-        await finishTransaction({
-          purchase: billingResult.rawPurchase,
-          isConsumable: true,
-        });
-      } catch (finishErr) {
-        console.error("finishTransaction failed:", finishErr);
-      }
-
       onSuccess(numAmount);
       Alert.alert(
         "Success",
@@ -182,7 +166,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
               marginBottom: 4,
             }}
           >
-            Add Money
+            Add Money From Apple Pay
           </Text>
           <Text
             style={{
@@ -269,43 +253,45 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={handleAddMoney}
-              disabled={isProcessing || !amount}
-              style={{
-                flex: 1,
-                backgroundColor:
-                  isProcessing || !amount ? "#6B7280" : "#10B981",
-                padding: 14,
-                borderRadius: 12,
-              }}
-            >
-              {isProcessing ? (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                  }}
-                >
-                  <ActivityIndicator size="small" color="#FFF" />
-                  <Text style={{ color: "#FFF", fontWeight: "600" }}>
-                    Processing...
+            {amount && (
+              <TouchableOpacity
+                onPress={handleAddMoney}
+                disabled={isProcessing || !amount}
+                style={{
+                  flex: 1,
+                  backgroundColor:
+                    isProcessing || !amount ? "#6B7280" : "#10B981",
+                  padding: 14,
+                  borderRadius: 12,
+                }}
+              >
+                {isProcessing ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <ActivityIndicator size="small" color="#FFF" />
+                    <Text style={{ color: "#FFF", fontWeight: "600" }}>
+                      Purchasing...
+                    </Text>
+                  </View>
+                ) : (
+                  <Text
+                    style={{
+                      color: "#FFF",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Purchase ₹{amount || "0"}
                   </Text>
-                </View>
-              ) : (
-                <Text
-                  style={{
-                    color: "#FFF",
-                    textAlign: "center",
-                    fontWeight: "600",
-                  }}
-                >
-                  Purchase ₹{amount || "0"}
-                </Text>
-              )}
-            </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
