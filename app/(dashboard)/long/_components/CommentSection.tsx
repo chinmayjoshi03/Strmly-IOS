@@ -513,7 +513,15 @@ const CommentsSection = ({
 
   // Helper function to check if current user can delete a comment/reply
   const canDeleteComment = (commentUserId: string) => {
-    return user?.id === commentUserId;
+    const canDelete = user?.id === commentUserId;
+    console.log('🔍 Delete permission check:', {
+      currentUserId: user?.id,
+      commentUserId,
+      canDelete,
+      userIdType: typeof user?.id,
+      commentUserIdType: typeof commentUserId
+    });
+    return canDelete;
   };
 
   const renderReply = (reply: any, parentCommentId: string) => (
@@ -644,10 +652,22 @@ const CommentsSection = ({
       >
         <Pressable
           onLongPress={() => {
+            console.log('🔍 Long press triggered on comment:', {
+              commentId: item._id,
+              commentUserId: item.user?.id,
+              currentUserId: user?.id
+            });
             if (canDeleteComment(item.user?.id)) {
+              console.log('✅ User can delete comment, showing delete modal');
               handleDeleteComment(item._id);
+            } else {
+              console.log('❌ User cannot delete comment');
             }
           }}
+          onPress={() => {
+            console.log('🔍 Regular press on comment - this should work');
+          }}
+          delayLongPress={500}
           style={{ flexDirection: "row", alignItems: "flex-start" }}
         >
           {/* Left content */}
@@ -683,7 +703,7 @@ const CommentsSection = ({
                   </Text>
                 </TouchableOpacity>
                 <Text style={{ color: "#9E9E9E", fontSize: 12 }}>
-                  {formatTimestamp(item.timestamp || item.createdAt)}
+                  {formatTimestamp(item.timestamp || item.createdAt || new Date())}
                 </Text>
               </View>
               <Text style={{ color: "#FFFFFF", fontSize: 16, marginTop: 2 }}>

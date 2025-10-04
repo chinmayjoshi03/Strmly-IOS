@@ -166,7 +166,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
               marginBottom: 4,
             }}
           >
-            Add Money
+            Add Money From Apple Pay
           </Text>
           <Text
             style={{

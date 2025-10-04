@@ -308,7 +308,7 @@ export class CommentAPI {
     console.log('🗑️ Delete reply request:', { replyId, videoId });
     
     const response = await fetch(
-      `${CONFIG.API_BASE_URL}/comments/delete`,
+      `${CONFIG.API_BASE_URL}/interactions/comments/delete`,
       {
         method: 'DELETE',
         headers: CommentAPI.getHeaders(token),

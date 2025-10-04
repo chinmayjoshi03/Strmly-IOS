@@ -735,7 +735,19 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
             haveCreator={haveCreator}
             isGlobalPlayer={isGlobalPlayer}
             accessVersion={accessVersion}
-            showBuyOption={setShowBuyOption} 
+            showBuyOption={setShowBuyOption}
+            videoData={{
+              _id: videoData._id,
+              name: videoData.name,
+              amount: videoData.amount,
+              created_by: {
+                _id: videoData.created_by._id,
+                username: videoData.created_by.username,
+                name: videoData.created_by.name,
+                profile_photo: videoData.created_by.profile_photo,
+              },
+              series: videoData.series,
+            }}
           />
         </View>
       )}

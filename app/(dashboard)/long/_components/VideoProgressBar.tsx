@@ -7,10 +7,13 @@ import {
   Text,
   Pressable,
   Alert,
+  Platform,
 } from "react-native";
 import { VideoPlayer } from "expo-video";
 import { useAuthStore } from "@/store/useAuthStore";
 import Constants from "expo-constants";
+import { router } from "expo-router";
+import { useGiftingStore } from "@/store/useGiftingStore";
 
 const PROGRESS_BAR_HEIGHT = 4; // Thicker progress bar like YouTube/TikTok
 const KNOB_SIZE = 14;
@@ -40,6 +43,23 @@ type Props = {
   showBuyOption: React.Dispatch<React.SetStateAction<boolean>>;
   isGlobalPlayer?: boolean;
   accessVersion?: number;
+  // Additional props for purchase navigation
+  videoData?: {
+    _id: string;
+    name: string;
+    amount: number;
+    created_by: {
+      _id: string;
+      username: string;
+      name?: string;
+      profile_photo: string;
+    };
+    series?: {
+      _id: string;
+      type: string;
+      price?: number;
+    } | null;
+  };
 };
 
 const formatTime = (seconds: number) => {
@@ -63,6 +83,7 @@ const VideoProgressBar = ({
   haveCreator,
   isGlobalPlayer = false,
   accessVersion,
+  videoData,
 }: Props) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -391,8 +412,10 @@ const VideoProgressBar = ({
       try {
         const currentPlayerTime = player.currentTime || 0;
 
-        // Always update current time, regardless of UI visibility
-        setCurrentTime(currentPlayerTime);
+        // iOS Fix: Only update UI time if not currently dragging to prevent conflicts
+        if (!isDragging) {
+          setCurrentTime(currentPlayerTime);
+        }
 
         // Check if video has reached the end time and user doesn't have access
         const isPremiumVideo = endTime < duration && endTime > 0;
@@ -443,7 +466,7 @@ const VideoProgressBar = ({
       } catch (error) {
         console.error("Error in time tracking:", error);
       }
-    }, 250);
+    }, Platform.OS === 'ios' ? 100 : 250); // iOS gets more frequent updates
 
     return () => {
       if (timeTrackingInterval.current) {
@@ -460,6 +483,7 @@ const VideoProgressBar = ({
     endTime,
     duration,
     videoId,
+    isDragging, // iOS Fix: Include dragging state to restart interval after drag
   ]);
 
   // Reset modal state when video changes or becomes inactive
@@ -470,6 +494,25 @@ const VideoProgressBar = ({
       setShowAccessModal(false);
     }
   }, [isActive, videoId]);
+
+  // Platform-specific: Force time synchronization after drag ends
+  useEffect(() => {
+    if (!isDragging && player && isActive) {
+      // iOS needs more time for seek operations to complete
+      const syncDelay = Platform.OS === 'ios' ? 200 : 50;
+      const syncTimeout = setTimeout(() => {
+        if (isMounted.current && player) {
+          const actualTime = player.currentTime || 0;
+          setCurrentTime(actualTime);
+          if (Platform.OS === 'ios') {
+            console.log("iOS post-drag sync - actualTime:", actualTime);
+          }
+        }
+      }, syncDelay);
+
+      return () => clearTimeout(syncTimeout);
+    }
+  }, [isDragging, player, isActive]);
   useEffect(() => {
     // Reset modal states when video is back at or near the start time
     if (currentTime <= initialStartTime + 0.5) {
@@ -512,8 +555,42 @@ const VideoProgressBar = ({
   };
 
   const handleShowPaidButton = () => {
-    showBuyOption(true);
     handleAccessModalClose();
+    
+    if (!videoData) {
+      // Fallback to showing buy option if video data is not available
+      showBuyOption(true);
+      return;
+    }
+
+    const { initiateGifting } = useGiftingStore.getState();
+    
+    // Initialize gifting store with video data
+    initiateGifting(videoData.created_by, videoData._id);
+
+    // Determine purchase flow based on video type and series
+    const series = videoData.series;
+    const videoAmount = videoData.amount || access.price || 0;
+    
+    if (series && series.type !== "Free") {
+      // Navigate to series purchase
+      router.push({
+        pathname: "/(dashboard)/PurchasePass/PurchaseSeries/[id]",
+        params: { id: series._id },
+      });
+    } else if (videoAmount > 0) {
+      // Navigate to individual video purchase
+      router.push({
+        pathname: "/(dashboard)/PurchasePass/PurchaseVideo/[id]",
+        params: { id: videoData._id },
+      });
+    } else {
+      // Navigate to creator pass purchase as fallback
+      router.push({
+        pathname: "/(dashboard)/PurchasePass/PurchaseCreatorPass/[id]",
+        params: { id: videoData.created_by._id },
+      });
+    }
   };
 
   // ✅ Validate seek position based on access permissions
@@ -609,18 +686,41 @@ const VideoProgressBar = ({
               videoId
             );
 
+            // Pause the player first
             player.pause();
+            
+            // iOS-specific: More robust seek operation
+            if (Platform.OS === 'ios') {
+              // On iOS, sometimes we need to pause briefly before seeking
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            // Set the new time
             player.currentTime = finalTime;
 
             // Immediately update local state to prevent UI lag
             setCurrentTime(finalTime);
 
-            // Small delay before resuming playback for smooth transition
+            // Platform-specific handling for seek operations
+            const seekDelay = Platform.OS === 'ios' ? 150 : 50;
             setTimeout(() => {
               if (isMounted.current && player) {
+                if (Platform.OS === 'ios') {
+                  // iOS-specific: Double-check that the seek actually happened
+                  const actualTime = player.currentTime || 0;
+                  if (Math.abs(actualTime - finalTime) > 0.5) {
+                    // If seek didn't work properly, try again
+                    console.log("iOS seek verification failed, retrying...", {
+                      expected: finalTime,
+                      actual: actualTime
+                    });
+                    player.currentTime = finalTime;
+                    setCurrentTime(finalTime);
+                  }
+                }
                 player.play();
               }
-            }, 50);
+            }, seekDelay);
           } catch (error) {
             console.error("Error seeking video:", error);
           }
@@ -851,6 +951,7 @@ export default React.memo(VideoProgressBar, (prev, next) => {
     prev.videoId === next.videoId &&
     prev.player === next.player &&
     prev.isVideoOwner === next.isVideoOwner &&
-    JSON.stringify(prev.access) === JSON.stringify(next.access)
+    JSON.stringify(prev.access) === JSON.stringify(next.access) &&
+    JSON.stringify(prev.videoData) === JSON.stringify(next.videoData)
   );
 });
