@@ -239,13 +239,18 @@ const Dashboard = () => {
         ) : (
           <>
             {/* Stats Card */}
-            <LinearGradient
-              colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="rounded-2xl px-8 py-6 mb-6"
-              style={{ width: 380, height: 273, alignSelf: "center" }}
-            >
+           <View 
+  className="rounded-2xl px-8 py-6 mb-6"
+  style={{ 
+    width: 380, 
+    height: 273, 
+    alignSelf: "center",
+    backgroundColor: "#000000",
+    borderWidth: 1,
+    borderColor: "#333333",
+    borderRadius: 16, // Added explicit borderRadius
+  }}
+>
               {/* Time Filter */}
               <View className="flex-row justify-between items-center mb-4"
               style={{paddingRight: Platform.OS == "ios" ? 2 : 0}}
@@ -284,7 +289,7 @@ const Dashboard = () => {
               {/* Stats Content */}
               {activeTab === "revenue" ? (
                 /* Revenue Breakdown */
-                <View className="space-y-2 px-2">
+                <View className="space-y-2 px--8">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"
@@ -358,7 +363,7 @@ const Dashboard = () => {
                 </View>
               ) : (
                 /* Non-Revenue Stats */
-                <View className="space-y-2 px-2">
+                <View className="space-y-2 px--8">
                   <View className="flex-row justify-between items-center">
                     <Text
                       className="text-gray-400 text-base"
@@ -405,7 +410,7 @@ const Dashboard = () => {
                   </View>
                 </View>
               )}
-            </LinearGradient>
+          </View>
           </>
         )}
       </ScrollView>

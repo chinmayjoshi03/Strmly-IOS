@@ -8,7 +8,6 @@ import {
   Heart,
   Paperclip,
 } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -60,21 +59,18 @@ const VideoAccess = () => {
   }, [id, token]);
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: "black" }}
-      edges={[]}
-    >
-      <View className="flex-1">
+    <SafeAreaView style={{ flex: 1, backgroundColor: "black" }} edges={[]}>
+      <View className="flex-1 bg-black">
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-3 mt-12">
+        <View className="flex-row items-center justify-between px-4 py-3 mt-5">
           <TouchableOpacity onPress={() => router.back()}>
             <X size={24} color="white" />
           </TouchableOpacity>
           <View className="w-6" />
         </View>
 
-        {/* Content */}
-        <View className="flex-1 items-center justify-center px-6">
+        {/* Content - Shifted upward */}
+        <View className="flex-1 items-center justify-center px-6 mt-[-90px]">
           {/* Paperclip Icon */}
           <View className="mb-8">
             <View className="w-20 h-20 rounded-2xl items-center justify-center">
@@ -89,20 +85,10 @@ const VideoAccess = () => {
 
           {/* Features Card */}
           <View className="w-full max-w-md rounded-2xl mb-8 overflow-hidden">
-            {/* Gradient Border */}
-            <LinearGradient
-              colors={["#4400FFA6", "#FFFFFF", "#FF00004D", "#FFFFFF"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="p-[2px] rounded-2xl"
-            >
-              {/* Inner Card with Black to Grey Gradient */}
-              <LinearGradient
-                colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="rounded-2xl p-8"
-              >
+            {/* Grey Border */}
+            <View className="p-[2px] rounded-3xl bg-black">
+              {/* Inner Card with Black Background */}
+              <View className="bg-black rounded-3xl p-8 border border-gray-900">
                 {/* Feature 1 */}
                 <View className="flex-row items-start mb-8">
                   <View className="mr-6 mt-1">
@@ -143,17 +129,12 @@ const VideoAccess = () => {
                     Directly support the creator's work
                   </Text>
                 </View>
-              </LinearGradient>
-            </LinearGradient>
+              </View>
+            </View>
           </View>
 
           {/* Join Button */}
-          <LinearGradient
-            colors={["#000000", "#0a0a0a", "#1a1a1a"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="rounded-full"
-          >
+          <View className="rounded-3xl border border-gray-800 bg-black">
             <TouchableOpacity
               onPress={() => {
                 initiateVideoAccess(videoData?.created_by, videoData.name, id);
@@ -168,7 +149,7 @@ const VideoAccess = () => {
                 Buy for ₹{videoData?.access.price}
               </Text>
             </TouchableOpacity>
-          </LinearGradient>
+          </View>
         </View>
       </View>
     </SafeAreaView>

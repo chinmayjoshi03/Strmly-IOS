@@ -21,6 +21,8 @@ import { useVideosStore } from "@/store/useVideosStore";
 
 type VideoDetailsProps = {
   haveCreator: React.Dispatch<React.SetStateAction<boolean>>;
+  haveAccess: React.Dispatch<React.SetStateAction<boolean>>;
+  checkAccess: React.Dispatch<React.SetStateAction<boolean>>;
   setWantToBuyVideo: React.Dispatch<React.SetStateAction<boolean>>;
 
   videoId: string;
@@ -73,6 +75,8 @@ type VideoDetailsProps = {
 
 const VideoDetails = ({
   haveCreator,
+  haveAccess,
+  checkAccess,
   setWantToBuyVideo,
   videoId,
   type,
@@ -86,6 +90,9 @@ const VideoDetails = ({
   is_following_creator,
   onToggleFullScreen,
   isFullScreen,
+  onEpisodeChange,
+  setShowBuyOption,
+  showBuyOption,
 }: VideoDetailsProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState(0);
@@ -99,11 +106,18 @@ const VideoDetails = ({
   const [isLoadingSeriesVideos, setIsLoadingSeriesVideos] =
     useState<boolean>(false);
 
-  const { token } = useAuthStore();
+  const [isFollowCreatorLoading, setIsFollowCreatorLoading] =
+    useState<boolean>(false);
+  const [isFollowCommunity, setIsFollowCommunity] = useState<boolean>(false);
+  const [isFollowCommunityLoading, setIsFollowCommunityLoading] =
+    useState<boolean>(false);
+
+  const { token, user } = useAuthStore();
   const { initiateGifting } = useGiftingStore();
 
   const { setVideosInZustand, videoType } = useVideosStore();
   const [seriesVideos, setSeriesVideos] = useState<any>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<{episodeIndex: number} | null>(null);
 
   const BACKEND_API_URL = Constants.expoConfig?.extra?.BACKEND_API_URL;
 
@@ -114,6 +128,21 @@ const VideoDetails = ({
   useEffect(() => {
     if (episode_number) setSelectedEpisodeIndex(episode_number);
   }, [episode_number]);
+
+  // Handle navigation after series data is fetched
+  useEffect(() => {
+    if (pendingNavigation && seriesVideos && seriesVideos.length > 0) {
+      console.log("🎬 Series data loaded, proceeding with navigation");
+      setVideosInZustand(seriesVideos);
+      
+      router.push({
+        pathname: "/(dashboard)/long/GlobalVideoPlayer",
+        params: { startIndex: pendingNavigation.episodeIndex.toString(), videoType: "series" },
+      });
+      
+      setPendingNavigation(null);
+    }
+  }, [pendingNavigation, seriesVideos, setVideosInZustand]);
 
   useFocusEffect(
     useCallback(() => {
@@ -146,9 +175,8 @@ const VideoDetails = ({
             "has access pass",
             data.data?.accessData && data.data?.accessData.content_type
           );
-          setHasAccessPass(
-            data.data?.accessData ? data.data.accessData.content_type : null
-          );
+          setHasAccessPass(data.data?.accessData ? data.data.accessData.content_type : null);
+          haveAccess(data.data?.accessData?.content_type != undefined);
           // if(data.data?.accessData && data.data.accessData.content_type != null){
           // }
           console.log(
@@ -163,6 +191,8 @@ const VideoDetails = ({
           //     ? error.message
           //     : "An unknown error occurred while checking video access."
           // );
+        } finally{
+          checkAccess(true);
         }
       };
 
@@ -397,9 +427,15 @@ const VideoDetails = ({
                 setShowDropdown(false);
                 setShowBuyOption(false);
               }}
-              className="border border-white rounded-md px-2"
+              className="border border-black rounded-md px-2 pb-0.5 bg-black items-center justify-center"
             >
-              <Text className="font-semibold text-sm text-white">Paid</Text>
+              <Text
+                className={`font-semibold text-sm ${createdBy._id === user?.id || hasAccessPass || hasCreatorPass ? "text-green-500" : "text-orange-500"}`}
+              >
+                {createdBy._id === user?.id || hasAccessPass || hasCreatorPass
+                  ? "Active"
+                  : "No Access"}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -528,7 +564,7 @@ const VideoDetails = ({
                       <Text className="text-white text-[16px]">
                         ₹
                         {series && series?.type !== "Free"
-                          ? series?.price
+                          ? (series?.price ?? videoAmount)
                           : videoAmount}
                       </Text>
                     )}
@@ -619,7 +655,7 @@ const VideoDetails = ({
                                 />
                               </Text>
                             ) : (
-                              `₹${series?.price}`
+                              `₹${series?.price ?? videoAmount}`
                             )
                           ) : hasAccessPass || hasCreatorPass ? (
                             <Text className="text-[16px] text-green-600">
@@ -655,10 +691,22 @@ const VideoDetails = ({
                   setShowDropdown(false);
                   console.log("selectedEpisodeIndex", idx);
                   setVideosInZustand(seriesVideos);
-                  router.push({
-                    pathname: "/(dashboard)/long/GlobalVideoPlayer",
-                    params: { startIndex: idx, videoType: "series" },
-                  });
+                  // For portrait mode, we need to update the videos store with series episodes
+                  // before navigating to ensure proper episode switching
+                  if (seriesVideos && seriesVideos.length > 0) {
+                    console.log("🎬 Updating videos store with series episodes for portrait mode");
+                    setVideosInZustand(seriesVideos);
+                    
+                    router.push({
+                      pathname: "/(dashboard)/long/GlobalVideoPlayer",
+                      params: { startIndex: idx.toString(), videoType: "series" },
+                    });
+                  } else {
+                    console.log("⚠️ No series videos available, fetching before navigation");
+                    // Set pending navigation and fetch series data
+                    setPendingNavigation({ episodeIndex: idx });
+                    fetchSeriesData();
+                  }
 
                   // Call the episode change callback if provided
                   // if (onEpisodeChange && ep) {

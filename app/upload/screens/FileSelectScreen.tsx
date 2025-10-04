@@ -38,6 +38,26 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
     }
   });
 
+  // Show content ownership confirmation before file selection
+  const showContentOwnershipPopup = () => {
+    Alert.alert(
+      "Content Ownership",
+      "You are allowed to upload only your own original content. If you upload third-party or copyrighted content, it will be deleted by the Strmly team.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "I Understand",
+          onPress: handleFileSelect,
+          style: "default"
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
   // Handle file selection
   const handleFileSelect = async () => {
     try {
@@ -48,13 +68,6 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
-
-        // Basic file validation
-        // const maxSize = 500 * 1024 * 1024; // 500MB
-        // if (file.size && file.size > maxSize) {
-        //   Alert.alert('File Too Large', 'Please select a video file smaller than 500MB');
-        //   return;
-        // }
 
         console.log("✅ FileSelectScreen: Selected file:", {
           name: file.name,
@@ -85,18 +98,13 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
   };
 
   // Handle continue with selected file
-  const handleContinue = () => {
-    if (selectedFile) {
-      console.log(
-        "✅ FileSelectScreen: Continue with file:",
-        selectedFile.name
-      );
-      if (onContinueUpload) {
-        onContinueUpload();
-      }
-    } else {
-      console.warn("⚠️ FileSelectScreen: No file selected");
-      Alert.alert("No File Selected", "Please select a video file first.");
+  const handleContinueUpload = () => {
+    console.log(
+      "✅ FileSelectScreen: Continue with file:",
+      selectedFile.name
+    );
+    if (onContinueUpload) {
+      onContinueUpload();
     }
   };
 
@@ -116,7 +124,7 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
   const handleSelectDifferentVideo = () => {
     setSelectedFile(null);
     setIsPlaying(false);
-    handleFileSelect();
+    showContentOwnershipPopup(); // Show popup again when selecting different video
   };
 
   return (
@@ -196,7 +204,7 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
             </Text>
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={handleFileSelect}
+              onPress={showContentOwnershipPopup} // Show popup when clicking upload
             >
               <Text style={styles.uploadButtonText}>Upload file</Text>
             </TouchableOpacity>
@@ -220,7 +228,7 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
 
         {/* Continue Button - Always show, but disabled when no file */}
         <TouchableOpacity
-          onPress={handleContinue}
+          onPress={handleContinueUpload}
           style={[
             styles.continueButton,
             !selectedFile && styles.continueButtonDisabled,

@@ -9,10 +9,11 @@ import {
   Image,
   FlatList,
   Dimensions,
-  BackHandler, // For opening external links
+  BackHandler,
+  Pressable, // For opening external links
 } from "react-native";
 import { CONFIG } from "@/Constants/config";
-import { HeartIcon, PaperclipIcon } from "lucide-react-native";
+import { HeartIcon, MoreVertical, PaperclipIcon } from "lucide-react-native";
 
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -38,6 +39,10 @@ export default function PersonalProfilePage() {
   const [page, setPage] = useState(1);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [showVideoMenu, setShowVideoMenu] = useState(false);
+  const [selectedVideoMenu, setSelectedVideoMenu] = useState<string | null>(
+    null
+  );
 
   const { token, user } = useAuthStore();
   const { setVideosInZustand, appendVideos } = useVideosStore();
@@ -227,7 +232,36 @@ export default function PersonalProfilePage() {
     }
   };
 
-  const renderGridItem = ({ item, index }: { item: any; index: number }) => (
+  const handleDeleteUserVideo = async (videoId: string) => {
+    try {
+      const response = await fetch(
+        `${BACKEND_API_URL}/caution/video/long/${videoId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            videoId: videoId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete user video");
+      }
+      console.log("delete response videos", data);
+      fetchUserVideos(1); // Refresh videos after deletion
+      Alert.alert("Success", "Video deleted successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+const renderGridItem = ({ item, index }: { item: any; index: number }) => (
     <TouchableOpacity
       className="relative aspect-[9/16] flex-1 rounded-sm overflow-hidden"
       onPress={() => {
@@ -251,6 +285,27 @@ export default function PersonalProfilePage() {
       ) : (
         <View className="w-full h-full flex items-center justify-center">
           <Text className="text-white text-xs">Loading...</Text>
+        </View>
+      )}
+
+      <Pressable
+        onPress={() => {
+          setSelectedVideoMenu(item._id);
+          setShowVideoMenu((prev) => !prev);
+        }}
+        className="bg-white bg-opacity-50 rounded-full p-1 absolute top-2 right-2"
+      >
+        <MoreVertical className="bg-black" size={10} />
+      </Pressable>
+
+      {selectedVideoMenu === item._id && showVideoMenu && (
+        <View className="absolute top-8 right-2 bg-white rounded-md shadow-md px-2 py-1">
+          <Pressable
+            onPress={() => handleDeleteUserVideo(item._id)}
+            className="px-3"
+          >
+            <Text className="text-red-500 text-sm">Delete</Text>
+          </Pressable>
         </View>
       )}
     </TouchableOpacity>

@@ -1,5 +1,6 @@
 // services/googlePlayBilling.ts
 // Google Play / App Store Billing Service (singleton)
+import { Platform } from "react-native";
 import {
   endConnection,
   getProducts,
@@ -103,7 +104,14 @@ class GooglePlayBillingService {
 
     // Request purchase (react-native-iap will open native UI)
     try {
-      await requestPurchase({ skus: [productId] });
+      if (Platform.OS === "android") {
+        await requestPurchase({ skus: [productId] });
+      } else {
+        await requestPurchase({
+          sku: productId,
+          andDangerouslyFinishTransactionAutomaticallyIOS: false,
+        });
+      }
     } catch (err) {
       // requestPurchase can throw or return void — bubble up
       console.error("[Billing] requestPurchase error:", err);

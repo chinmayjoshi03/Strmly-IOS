@@ -299,19 +299,19 @@ export default function PublicCommunityPage() {
               </TouchableOpacity>
 
               {communityData?.community_fee_type !== "free" && (
-                <TouchableOpacity className="flex-1 px-4 py-2 rounded-xl bg-transparent border border-white">
-                  {communityData?.community_fee_type === "free" ? (
-                    <Text className="text-white text-center">Free</Text>
-                  ) : (
-                    <View className="flex-row items-center justify-center">
-                      <Text className="text-white">Join at </Text>
-                      <IndianRupee color={"white"} size={13} />
-                      <Text className="text-white text-center">
-                        {communityData?.community_fee_amount}/month
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
+               <TouchableOpacity className="flex-1 px-4 py-2 rounded-xl bg-transparent border border-white">
+  {communityData?.community_fee_type === "free" ? (
+    <Text className="text-white text-center">Free</Text>
+  ) : (
+    <View className="flex-row items-center justify-center">
+      <Text className="text-white">Join at </Text>
+      <IndianRupee color={"white"} size={13} />
+      <Text className="text-white text-center">
+        {communityData?.community_fee_amount}/month
+      </Text>
+    </View>
+  )}
+</TouchableOpacity>
               )}
             </View>
 

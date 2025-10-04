@@ -471,16 +471,16 @@ export default function PublicCommunityPage() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     className={`flex flex-col gap-1 items-center pb-4 flex-1 ${activeTab === "creators" ? "border-b-2 border-white" : ""}`}
-                    // onPress={() => {
-                    //   router.push({
-                    //     pathname: "/(communities)/CommunitySections",
-                    //     params: {
-                    //       communityId: id,
-                    //       communityName: communityData?.name,
-                    //       section: "creators",
-                    //     },
-                    //   } as any);
-                    // }}
+                  // onPress={() => {
+                  //   router.push({
+                  //     pathname: "/(communities)/CommunitySections",
+                  //     params: {
+                  //       communityId: id,
+                  //       communityName: communityData?.name,
+                  //       section: "creators",
+                  //     },
+                  //   } as any);
+                  // }}
                   >
                     <Text className="font-bold text-lg text-white">
                       {communityData?.creators?.length || 0}
@@ -511,55 +511,50 @@ export default function PublicCommunityPage() {
                 </View>
 
                 {/* Buttons */}
-                <View className="flex flex-row w-full items-center justify-center gap-2 mt-5 md:mt-0">
+                <View className="flex flex-row w-full items-center mt-5 md:mt-0" style={{ gap: 12 }}>
                   <TouchableOpacity
                     onPress={followCommunity}
-                    className="flex-1 px-4 py-2 rounded-xl bg-transparent border border-gray-400"
+                    className="px-4 py-2 rounded-xl bg-transparent border border-gray-400"
+                    style={{ flex: 1 }}
                   >
-                    <Text className="text-white text-center">
+                    <Text className="text-white text-center font-medium">
                       {!isFollowingCommunity ? "Follow" : "Following"}
                     </Text>
                   </TouchableOpacity>
 
-                  {communityData?.community_fee_type !== "free" &&
-                    !hasCommunityPass && (
-                      <TouchableOpacity
-                        onPress={() =>
+                  {!hasCommunityPass && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (communityData?.community_fee_type !== "free") {
                           router.push({
                             pathname:
                               "/(dashboard)/PurchasePass/PurchaseCommPass/[id]",
                             params: { id: id },
-                          })
+                          });
                         }
-                        className="rounded-xl overflow-hidden"
-                      >
-                        <LinearGradient
-                          colors={[
-                            "#4400FFA6",
-                            "#FFFFFF",
-                            "#FF00004D",
-                            "#FFFFFF",
-                          ]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          className="p-[1px] rounded-xl flex-1"
-                        >
-                          <View className="flex-1 px-4 py-2 rounded-xl bg-black items-center justify-center">
-                            <View className="flex-row items-center justify-center">
-                              <Text className="text-white">Join at </Text>
-                              <IndianRupee color={"white"} size={13} />
-                              <Text className="text-white text-center">
-                                {communityData?.community_fee_amount}
-                                /month
-                              </Text>
-                            </View>
-                          </View>
-                        </LinearGradient>
-                      </TouchableOpacity>
-                    )}
+                      }}
+                      className="px-4 py-2 rounded-xl bg-transparent border border-gray-400"
+                      style={{ flex: 1 }}
+                    >
+                      {communityData?.community_fee_type === "free" ? (
+                        <Text className="text-white text-center font-medium">Free</Text>
+                      ) : (
+                        <View className="flex-row items-center justify-center">
+                          <Text className="text-white font-medium">Join at </Text>
+                          <IndianRupee color={"white"} size={13} />
+                          <Text className="text-white font-medium">
+                            {communityData?.community_fee_amount}/month
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  )}
 
                   {hasCommunityPass && (
-                    <TouchableOpacity className="rounded-xl overflow-hidden">
+                    <TouchableOpacity
+                      className="rounded-xl overflow-hidden"
+                      style={{ flex: 1 }}
+                    >
                       <LinearGradient
                         colors={[
                           "#4400FFA6",
@@ -569,14 +564,12 @@ export default function PublicCommunityPage() {
                         ]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
-                        className="p-[1px] rounded-xl flex-1"
+                        className="p-[1px] rounded-xl"
                       >
-                        <View className="flex-1 px-4 rounded-xl bg-black items-center justify-center">
-                          <View className="items-center justify-center">
-                            <Text className="text-white text-lg text-center">
-                              Purchased
-                            </Text>
-                          </View>
+                        <View className="px-4 py-2 rounded-xl bg-black items-center justify-center">
+                          <Text className="text-white font-medium text-center">
+                            Purchased
+                          </Text>
                         </View>
                       </LinearGradient>
                     </TouchableOpacity>

@@ -20,12 +20,13 @@ interface AddMoneyModalProps {
   onClose: () => void;
   onSuccess: (amount: number) => void;
   onCreateOrder: (amount: number) => Promise<any>;
-  // change onVerifyPayment to accept platform-agnostic payload
+
   onVerifyPayment: (
-    orderIdOrTransactionId: string, // either purchaseToken/transactionId depending on platform
+    // orderIdOrTransactionId: string, // either purchaseToken/transactionId depending on platform
     productId: string,
     receiptOrToken: string, // purchaseToken (android) or transactionReceipt (ios)
-    amount: number
+    amount: number,
+    platform: string
   ) => Promise<any>;
   onError?: (error: Error) => void;
 }
@@ -64,10 +65,9 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
     const numAmount = parseFloat(amount);
     setIsProcessing(true);
 
-    try {
-      // const order = await onCreateOrder(numAmount);
-      // if (!order) throw new Error("Failed to create wallet load order");
+    let verificationError: Error | null = null;
 
+    try {
       const billingResult = await initiateGooglePlayBilling({
         amount: numAmount,
         currency: "INR",
@@ -83,12 +83,38 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
 
       // 4. call backend verification API with the right fields
       // use purchaseToken for Android, transactionReceipt for iOS
-      await onVerifyPayment(
-        billingResult.orderIdAndroid ?? billingResult.transactionId ?? "",
-        billingResult.productId,
-        billingResult.purchaseToken ?? billingResult.transactionReceipt ?? "",
-        numAmount
-      );
+      try {
+        await onVerifyPayment(
+          // billingResult.orderIdAndroid ?? billingResult.transactionId ?? "",
+          billingResult.productId,
+          billingResult.purchaseToken ?? billingResult.transactionReceipt ?? "",
+          numAmount,
+          billingResult.platform
+        );
+      } catch (verifyErr: any) {
+        console.error("Verification failed:", verifyErr);
+        verificationError = verifyErr;
+      }
+
+      // await onVerifyPayment(
+      //   "add_money_to_wallet_50",
+      //   "caocikealmedahkkacpflild.AO-J1Owzxzs2mnEor8iwlyLg-W7_e8_rHhxd_ep3GfgyVW-LZSw6LYG2wRIP85GrfwCtzcNZKHbR2J_MasW6DcfGocW1YIixTg",
+      //   numAmount,
+      //   'ios'
+      // );
+
+      try {
+        await finishTransaction({
+          purchase: billingResult.rawPurchase,
+          isConsumable: true,
+        });
+      } catch (finishErr) {
+        console.error("finishTransaction failed:", finishErr);
+      }
+
+      if (verificationError) {
+        throw verificationError;
+      }
 
       // await onVerifyPayment(
       //   "TEST_ORDER_ID",
@@ -276,7 +302,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
                     fontWeight: "600",
                   }}
                 >
-                  Pay ₹{amount || "0"}
+                  Purchase ₹{amount || "0"}
                 </Text>
               )}
             </TouchableOpacity>

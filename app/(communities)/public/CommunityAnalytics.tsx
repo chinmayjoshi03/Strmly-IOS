@@ -321,18 +321,18 @@ const CommunityAnalytics = () => {
                 ) : (
                     <>
                         {/* Stats Card */}
-                        <LinearGradient
-                            colors={['#000000', '#0a0a0a', '#1a1a1a']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            className="rounded-2xl p-6 mb-6"
-                            style={{
-                                width: 360,
-                                height: activeTab === 'revenue' ? 110 : 166,
-                                alignSelf: 'center',
-                                borderRadius: 10
-                            }}
-                        >
+                            <View 
+                    className="rounded-2xl px-8 py-6 mb-6"
+                    style={{ 
+                        width: 380, 
+                        height: 170, 
+                        alignSelf: "center",
+                        backgroundColor: "#000000",
+                        borderWidth: 1,
+                        borderColor: "#333333",
+                        borderRadius: 16, // Added explicit borderRadius
+                    }}
+                    >
                             {/* Time Filter */}
                             <View className="flex-row justify-between items-center mb-4"
                             style={{paddingRight: Platform.OS == "ios" ? 2 : 0}}
@@ -360,7 +360,9 @@ const CommunityAnalytics = () => {
 
                             {/* Stats Content */}
                             {activeTab === 'non-revenue' ? (
-                                <View className="space-y-2 px-2">
+                                <View className="space-y-2 px--8 -mx-2">
+                                
+
                                     <View className="flex-row justify-between items-center">
                                         <Text className="text-gray-400 text-base" style={{ fontFamily: 'Inter' }}>Total Videos</Text>
                                         <Text className="text-white text-base" style={{ fontFamily: 'Inter' }}>{stats ? formatNumber(stats.totalVideos || 0) : '0'}</Text>
@@ -371,6 +373,7 @@ const CommunityAnalytics = () => {
                                     </View>
                                 </View>
                             ) : null}
+                      </View>
                         </LinearGradient>
                     </>
                 )}

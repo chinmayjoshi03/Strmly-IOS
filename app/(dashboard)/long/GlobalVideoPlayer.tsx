@@ -41,7 +41,8 @@ const GlobalVideoPlayer: React.FC = () => {
   const debounceRef = useRef<NodeJS.Timeout | number | null>(null);
 
   useEffect(() => {
-    if (storedVideos.length > 0 && videos.length == 0) {
+    if (storedVideos.length > 0) {
+      console.log("GlobalVideoPlayer: Updating videos from store", storedVideos.length);
       setVideos(storedVideos);
       const index = Math.min(
         Math.max(parseInt(startIndex ?? "0", 10), 0),
@@ -50,6 +51,27 @@ const GlobalVideoPlayer: React.FC = () => {
       setVisibleIndex(index);
       setLoading(false);
       setNowRenderVideo(true);
+      
+      // Scroll to the correct index after a short delay to ensure FlatList is ready
+      setTimeout(() => {
+        if (flatListRef.current && index >= 0) {
+          console.log("GlobalVideoPlayer: Scrolling to index", index);
+          try {
+            flatListRef.current.scrollToIndex({ 
+              index, 
+              animated: false,
+              viewPosition: 0
+            });
+          } catch (error) {
+            console.log("GlobalVideoPlayer: Scroll to index failed, using offset", error);
+            // Fallback to scrollToOffset if scrollToIndex fails
+            flatListRef.current.scrollToOffset({ 
+              offset: index * VIDEO_HEIGHT, 
+              animated: false 
+            });
+          }
+        }
+      }, 100);
     }
   }, [storedVideos, startIndex]);
 
@@ -82,17 +104,25 @@ const GlobalVideoPlayer: React.FC = () => {
     waitForInteraction: true,
   }).current;
 
- const renderItem = useCallback(
-  ({ item, index }: { item: VideoItemType; index: number }) => {
-    if (index !== visibleIndex) {
-      return <ThemedView style={{ height: VIDEO_HEIGHT }} />;
-    }
+  // Handle episode change within the current player
+  const handleEpisodeChange = useCallback((episodeData: VideoItemType) => {
+    console.log("GlobalVideoPlayer: Episode change requested", episodeData);
+    console.log("Current visible index:", visibleIndex);
+    console.log("Current videos length:", videos.length);
+    
+    // Update the current video data in the videos array
+    setVideos(prevVideos => {
+      const newVideos = [...prevVideos];
+      console.log("Updating video at index", visibleIndex, "from:", newVideos[visibleIndex]?.name, "to:", episodeData.name);
+      newVideos[visibleIndex] = episodeData;
+      return newVideos;
+    });
+  }, [visibleIndex, videos.length]);
 
-    return (
-      <ThemedView style={{ 
-        height: VIDEO_HEIGHT, 
-        paddingBottom: 200 // Add bottom padding to prevent progress bar from going off-screen
-      }}>
+  const renderItem = useCallback(
+    ({ item, index }: { item: VideoItemType; index: number }) => {
+      // Always render VideoPlayer components, but only the visible one will be active
+      return (
         <VideoPlayer
           key={`video-${item._id}`}
           videoData={item}
@@ -100,12 +130,12 @@ const GlobalVideoPlayer: React.FC = () => {
           isGlobalPlayer={true}
           showCommentsModal={showCommentsModal}
           setShowCommentsModal={setShowCommentsModal}
+          onEpisodeChange={handleEpisodeChange}
         />
-      </ThemedView>
-    );
-  },
-  [visibleIndex, showCommentsModal]
-);
+      );
+    },
+    [visibleIndex, showCommentsModal, handleEpisodeChange]
+  );
 
   const getItemLayout = useCallback(
     (_data: any, index: number) => ({
@@ -197,9 +227,9 @@ const GlobalVideoPlayer: React.FC = () => {
           scrollEnabled={!showCommentsModal && !isLandscape}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
-          initialNumToRender={1}
-          maxToRenderPerBatch={1}
-          windowSize={1}
+          initialNumToRender={3}
+          maxToRenderPerBatch={2}
+          windowSize={3}
           // updateCellsBatchingPeriod={100}
           removeClippedSubviews={true}
           showsVerticalScrollIndicator={false}
