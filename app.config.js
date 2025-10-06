@@ -14,7 +14,11 @@ export default {
     ios: {
       bundleIdentifier: "com.anonymous.strmly",
       buildNumber: "4", 
-      supportsTablet: true
+      supportsTablet: true,
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+        UIBackgroundModes: []
+      }
     },
     android: {
       versionCode: 3,
@@ -25,13 +29,6 @@ export default {
       package: "com.anonymous.strmly",
       softwareKeyboardLayoutMode: "pan",
       edgeToEdgeEnabled: true
-    },
-    ios: {
-        bundleIdentifier: "com.anonymous.strmly",
-        infoPlist: {
-        ITSAppUsesNonExemptEncryption: false,
-         UIBackgroundModes: []
-      }
     },
     web: {
       bundler: "metro",

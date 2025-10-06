@@ -91,7 +91,7 @@ const VideoPlayer = ({
   const [accessVersion, setAccessVersion] = useState(0);
 
 
-const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
+  const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
   const { user } = useAuthStore();
 
   const [showWallet, setShowWallet] = useState(true);
@@ -687,6 +687,8 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
         haveAccessPass={haveAccess}
         haveCreator={setCheckCreatorPass}
         checkAccess={setAccessCheckedAPI}
+        accessVersion={accessVersion}
+        handleInitialSeekComplete={handleInitialSeekComplete}
         showBuyOption={showBuyOption}
         setShowBuyOption={setShowBuyOption}
         showWallet={setShowWallet}
@@ -696,7 +698,7 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
           likes: localStats.likes,
           gifts: localStats.gifts,
           shares: localStats.shares,
-          comments: { length: localStats.comments },
+          comments: Array(localStats.comments).fill(null),
         }}
         isGlobalPlayer={isGlobalPlayer}
         setShowCommentsModal={setShowCommentsModal}
@@ -729,6 +731,7 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
             videoId={videoData._id}
             duration={videoData.duration || 0}
             access={videoData.access}
+            hasCreatorPassOfVideoOwner={videoData.hasCreatorPassOfVideoOwner}
             onInitialSeekComplete={handleInitialSeekComplete}
             isVideoOwner={videoData.created_by._id === user?.id}
             haveAccess={haveAccess}
@@ -743,10 +746,14 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
               created_by: {
                 _id: videoData.created_by._id,
                 username: videoData.created_by.username,
-                name: videoData.created_by.name,
+                name: (videoData.created_by as any).name || videoData.created_by.username,
                 profile_photo: videoData.created_by.profile_photo,
               },
-              series: videoData.series,
+              series: videoData.series ? {
+                _id: videoData.series._id,
+                type: videoData.series.type,
+                price: videoData.series.price,
+              } : null,
             }}
           />
         </View>
@@ -804,7 +811,15 @@ const [accessCheckedAPI, setAccessCheckedAPI] = useState(false);
           <SeriesPurchaseMessage
             isVisible={true}
             onClose={clearSeriesData}
-            series={series}
+            series={{
+              ...series,
+              created_by: {
+                _id: videoData.created_by._id,
+                username: videoData.created_by.username,
+                name: (videoData.created_by as any).name || videoData.created_by.username,
+                profile_photo: videoData.created_by.profile_photo,
+              }
+            }}
           />
         </View>
       )}
