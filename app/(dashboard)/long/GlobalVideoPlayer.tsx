@@ -84,15 +84,23 @@ const GlobalVideoPlayer: React.FC = () => {
     debounceRef.current = setTimeout(() => {
       if (viewableItems.length > 0) {
         const currentIndex = viewableItems[0].index;
+        const previousIndex = visibleIndex;
+        
+        console.log("GlobalVideoPlayer: Viewable items changed", {
+          previousIndex,
+          currentIndex,
+          videoId: videos[currentIndex]?._id
+        });
+        
         setVisibleIndex(currentIndex);
       }
     }, 100);
-  }, []);
+  }, [visibleIndex, videos]);
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 95,
-    minimumViewTime: 100,
-    waitForInteraction: true,
+    itemVisiblePercentThreshold: 80, // Reduced from 95 to 80 for better responsiveness
+    minimumViewTime: 50, // Reduced from 100 to 50 for faster transitions
+    waitForInteraction: false, // Changed to false for immediate response
   }).current;
 
   // Handle episode change within the current player

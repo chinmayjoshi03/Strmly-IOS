@@ -361,7 +361,7 @@ const VideoPlayer = ({
     setIsInitialSeekComplete(true);
   };
 
-  // ✅ UPDATED: Handle video playback with initial seek logic
+  // ✅ UPDATED: Handle video playback with initial seek logic and proper state management
   useEffect(() => {
     if (!player || !videoData?.videoUrl) return;
 
@@ -378,15 +378,31 @@ const VideoPlayer = ({
       // ✅ NEW: Only play if initial seek is complete (for videos with start time) or no start time
       (!hasStartTime || isInitialSeekComplete);
 
+    console.log(`VideoPlayer ${videoData._id}: Playback decision`, {
+      shouldPlay,
+      accessChecked,
+      canPlayVideo,
+      isReady,
+      isActive,
+      isFocused,
+      isGifted: !!isGifted,
+      playerError,
+      isInitialSeekComplete,
+      hasStartTime
+    });
+
     try {
       if (shouldPlay) {
+        console.log(`VideoPlayer ${videoData._id}: Starting playback`);
         player.muted = isMutedFromStore;
         player.play();
         setActivePlayer(player);
         usePlayerStore.getState().smartPlay();
       } else {
+        console.log(`VideoPlayer ${videoData._id}: Pausing playback`);
         player.pause();
         if (!isFocused || !isActive) {
+          player.muted = true; // Ensure muted when inactive
           clearActivePlayer();
         }
       }
@@ -405,16 +421,47 @@ const VideoPlayer = ({
     player,
     playerError,
     videoData?.videoUrl,
+    videoData._id,
     isInitialSeekComplete, // ✅ NEW: Include initial seek state
     videoData?.access?.freeRange?.start_time, // ✅ NEW: Include start time
   ]);
 
-  // ✅ NEW: Reset initial seek state when video changes or becomes active
+  // ✅ FIXED: Reset initial seek state when video changes or becomes active
   useEffect(() => {
     setIsInitialSeekComplete(false);
-    // ✅ FIXED: Reset hasBeenActiveBefore when video changes
     setHasBeenActiveBefore(false);
+    
+    // Reset all player states when video changes
+    setIsReady(false);
+    setIsBuffering(false);
+    setPlayerError(false);
+    setAccessChecked(false);
+    setCanPlayVideo(false);
+    
+    console.log(`VideoPlayer: Resetting states for video ${videoData._id}`);
   }, [videoData._id, videoData?.access?.freeRange?.start_time]);
+
+  // ✅ NEW: Reset states when becoming inactive to ensure clean state for next activation
+  useEffect(() => {
+    if (!isActive) {
+      console.log(`VideoPlayer: Video ${videoData._id} became inactive, resetting seek states`);
+      setIsInitialSeekComplete(false);
+      setHasBeenActiveBefore(false);
+      
+      // Ensure player is properly paused and muted when inactive
+      if (player) {
+        try {
+          player.pause();
+          player.muted = true;
+          clearActivePlayer();
+        } catch (error) {
+          console.log("Error pausing inactive player:", error);
+        }
+      }
+    } else {
+      console.log(`VideoPlayer: Video ${videoData._id} became active`);
+    }
+  }, [isActive, videoData._id, player]);
 
   // ✅ FIXED: Only reset to start time on FIRST activation, not on orientation changes
   useEffect(() => {
@@ -423,12 +470,28 @@ const VideoPlayer = ({
       if (!hasBeenActiveBefore) {
         const startTime = videoData.access.freeRange.start_time;
         if (player.currentTime !== startTime) {
-          console.log(`Initial reset of video ${videoData._id} to start time: ${startTime}s`);
+          console.log(`VideoPlayer: Initial reset of video ${videoData._id} to start time: ${startTime}s`);
           player.currentTime = startTime;
+          
+          // Call the initial seek complete callback after a short delay to ensure seek is processed
+          setTimeout(() => {
+            console.log(`VideoPlayer: Calling handleInitialSeekComplete for video ${videoData._id}`);
+            handleInitialSeekComplete();
+          }, 300);
+        } else {
+          // If already at start time, just call the callback
+          handleInitialSeekComplete();
         }
         setHasBeenActiveBefore(true);
       }
       // If hasBeenActiveBefore is true, don't reset - let the user's seek position remain
+    } else if (isActive && player && (!videoData?.access?.freeRange?.start_time || videoData?.access?.freeRange?.start_time <= 0)) {
+      // For videos without start time, immediately mark initial seek as complete
+      if (!hasBeenActiveBefore) {
+        console.log(`VideoPlayer: No start time for video ${videoData._id}, marking initial seek complete`);
+        handleInitialSeekComplete();
+        setHasBeenActiveBefore(true);
+      }
     }
   }, [isActive, player, videoData._id, videoData?.access?.freeRange?.start_time, hasBeenActiveBefore]);
 
@@ -464,12 +527,21 @@ const VideoPlayer = ({
     videoData?.access?.freeRange?.start_time,
   ]);
 
-  // Handle focus
+  // Handle focus with improved audio management
   useEffect(() => {
     if (!player) return;
 
+    console.log(`VideoPlayer ${videoData._id}: Focus change`, {
+      isFocused,
+      isActive,
+      isReady,
+      canPlayVideo,
+      isMutedFromStore
+    });
+
     try {
       if (!isFocused) {
+        console.log(`VideoPlayer ${videoData._id}: Lost focus, pausing and muting`);
         player.pause();
         player.muted = true;
         clearActivePlayer();
@@ -481,6 +553,7 @@ const VideoPlayer = ({
         canPlayVideo &&
         (!videoData?.access?.freeRange?.start_time || isInitialSeekComplete) // ✅ NEW: Check initial seek
       ) {
+        console.log(`VideoPlayer ${videoData._id}: Gained focus, playing with mute state:`, isMutedFromStore);
         player.muted = isMutedFromStore;
         player.play();
         setActivePlayer(player);
@@ -498,6 +571,7 @@ const VideoPlayer = ({
     isGifted,
     playerError,
     canPlayVideo,
+    videoData._id,
     isInitialSeekComplete, // ✅ NEW: Include initial seek state
     videoData?.access?.freeRange?.start_time,
   ]);
@@ -724,7 +798,7 @@ const VideoPlayer = ({
                 : { bottom: 5 }
           }
         >
-          {/* ✅ UPDATED: Pass onInitialSeekComplete callback */}
+          {/* ✅ UPDATED: Pass combined callback that updates both states */}
           <VideoProgressBar
             player={player}
             isActive={isActive}
@@ -732,7 +806,10 @@ const VideoPlayer = ({
             duration={videoData.duration || 0}
             access={videoData.access}
             hasCreatorPassOfVideoOwner={videoData.hasCreatorPassOfVideoOwner}
-            onInitialSeekComplete={handleInitialSeekComplete}
+            onInitialSeekComplete={() => {
+              console.log(`VideoPlayer: onInitialSeekComplete called for ${videoData._id}`);
+              handleInitialSeekComplete();
+            }}
             isVideoOwner={videoData.created_by._id === user?.id}
             haveAccess={haveAccess}
             haveCreator={haveCreator}
