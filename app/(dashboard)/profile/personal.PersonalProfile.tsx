@@ -261,7 +261,7 @@ export default function PersonalProfilePage() {
     }
   };
 
-const renderGridItem = ({ item, index }: { item: any; index: number }) => (
+  const renderGridItem = ({ item, index }: { item: any; index: number }) => (
     <TouchableOpacity
       className="relative aspect-[9/16] flex-1 rounded-sm overflow-hidden"
       onPress={() => {
@@ -314,7 +314,7 @@ const renderGridItem = ({ item, index }: { item: any; index: number }) => (
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "black" }} edges={[]}>
       {/* <ThemedView className="flex-1"> */}
-            
+
       {/* Video Grid */}
       <FlatList
         data={videos}
@@ -373,10 +373,10 @@ const renderGridItem = ({ item, index }: { item: any; index: number }) => (
                       </Text>
                       {userData?.creator_profile?.verification_status ===
                         "verified" && (
-                        <Text className="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-500 text-white">
-                          Verified
-                        </Text>
-                      )}
+                          <Text className="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-500 text-white">
+                            Verified
+                          </Text>
+                        )}
                     </View>
                   </View>
                 </View>
@@ -450,7 +450,7 @@ const renderGridItem = ({ item, index }: { item: any; index: number }) => (
                     }
                     className="px-4 py-2 rounded-lg border  border-gray-400 "
                   >
-                    <Text className="text-white text-center font-bold">
+                    <Text className="text-white text-center">
                       My Community
                     </Text>
                   </TouchableOpacity>
@@ -462,7 +462,7 @@ const renderGridItem = ({ item, index }: { item: any; index: number }) => (
                     }
                     className="px-4 py-2 rounded-lg border  border-gray-400 " // Use rounded-md for consistency
                   >
-                    <Text className="text-white text-center font-bold">
+                    <Text className="text-white text-center">
                       Dashboard
                     </Text>
                   </TouchableOpacity>
@@ -482,7 +482,7 @@ const renderGridItem = ({ item, index }: { item: any; index: number }) => (
                     <Text className="text-white text-center">History</Text>
                   </TouchableOpacity>
 
-                                   <TouchableOpacity
+                  <TouchableOpacity
                     onPress={() => router.push("/(dashboard)/profile/access")}
                     className="px-4 py-2 border border-gray-400 rounded-lg"
                   >
