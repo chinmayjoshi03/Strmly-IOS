@@ -17,6 +17,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import ThemedView from "@/components/ThemedView";
 import { communityActions } from "@/api/community/communityActions";
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 
 interface User {
   _id: string;
@@ -31,6 +32,10 @@ export default function CommunitySections() {
   const params = useLocalSearchParams();
   const { token } = useAuthStore();
   const insets = useSafeAreaInsets();
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
   const [activeSection, setActiveSection] = useState<SectionType>((params.section as SectionType) || 'followers');
   const [searchQuery, setSearchQuery] = useState("");
@@ -227,15 +232,15 @@ export default function CommunitySections() {
       </View>
 
       {/* Search Bar */}
-      <View className="px-6 py-2">
-        <View className="bg-black border border-gray-600 rounded-lg px-3 py-2">
+      <View className="py-2" style={responsiveStyles.containerPadding}>
+        <View className="bg-black border border-gray-600 rounded-lg" style={responsiveStyles.searchInput}>
           <TextInput
-            className="text-white text-sm"
+            className="text-white"
             placeholder="Search..."
             placeholderTextColor="gray"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            style={{ fontFamily: 'Poppins' }}
+            style={{ fontFamily: 'Poppins', fontSize: deviceInfo.isTabletDevice ? 18 : 14 }}
           />
         </View>
       </View>

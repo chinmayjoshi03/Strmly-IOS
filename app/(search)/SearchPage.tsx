@@ -24,6 +24,7 @@ import { CONFIG } from "@/Constants/config";
 
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 
 const { width, height: page_height } = Dimensions.get("window");
 const itemSize = width / 3;
@@ -35,6 +36,10 @@ const SearchScreen: React.FC = () => {
   const [trendingVideos, setTrendingVideos] = useState<any[]>([]);
   const [trendingLoading, setTrendingLoading] = useState<boolean>(false);
   const [trendingError, setTrendingError] = useState<string>("");
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
 
 
@@ -439,13 +444,13 @@ const renderAccountItem = ({ item }: { item: any }) => {
   }
 
   return (
-    <SafeAreaView style={{ height: page_height, backgroundColor: "black" }}>
+    <SafeAreaView style={{ height: page_height, backgroundColor: "black" }} edges={['top']}>
       <View style={{ ...styles.container, height: page_height }}>
 
         <TextInput
           placeholder="Search"
           placeholderTextColor="#ccc"
-          style={styles.searchInput}
+          style={[styles.searchInput, deviceInfo.isTabletDevice ? responsiveStyles.searchInput : {}]}
           value={searchQuery}
           onChangeText={handleSearchChange}
           autoCorrect={false}
@@ -454,32 +459,62 @@ const renderAccountItem = ({ item }: { item: any }) => {
 
         {/* Show tabs only when searching */}
         {isSearchActive && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.selectionTabContainer}
-            contentContainerStyle={styles.selectionTab}
-          >
-            {tabs.map((label, index) => (
-              <TouchableOpacity
-                style={[
-                  styles.selectionButton,
-                  selectedTab === index ? styles.selectedButton : {},
-                ]}
-                key={index}
-                onPress={() => setSelectedTab(index)}
-              >
-                <ThemedText
+          deviceInfo.isTabletDevice ? (
+            // For iPad: Use regular View with centered content
+            <View style={[styles.selectionTabContainer, deviceInfo.isTabletDevice ? responsiveStyles.containerPadding : {}]}>
+              <View style={[styles.selectionTab, deviceInfo.isTabletDevice ? responsiveStyles.searchTabsContainer : {}]}>
+                {tabs.map((label, index) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.selectionButton,
+                      deviceInfo.isTabletDevice ? responsiveStyles.searchTabButton : {},
+                      selectedTab === index ? styles.selectedButton : {},
+                    ]}
+                    key={index}
+                    onPress={() => setSelectedTab(index)}
+                  >
+                    <ThemedText
+                      style={[
+                        styles.tab,
+                        selectedTab === index ? styles.selectedText : {},
+                      ]}
+                    >
+                      {label}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : (
+            // For iPhone: Use ScrollView as before
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.selectionTabContainer}
+              contentContainerStyle={[styles.selectionTab, deviceInfo.isTabletDevice ? responsiveStyles.containerPadding : {}]}
+            >
+              {tabs.map((label, index) => (
+                <TouchableOpacity
                   style={[
-                    styles.tab,
-                    selectedTab === index ? styles.selectedText : {},
+                    styles.selectionButton,
+                    deviceInfo.isTabletDevice ? responsiveStyles.searchTabButton : {},
+                    selectedTab === index ? styles.selectedButton : {},
                   ]}
+                  key={index}
+                  onPress={() => setSelectedTab(index)}
                 >
-                  {label}
-                </ThemedText>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <ThemedText
+                    style={[
+                      styles.tab,
+                      selectedTab === index ? styles.selectedText : {},
+                    ]}
+                  >
+                    {label}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )
         )}
 
         {/* Loading indicator */}
@@ -585,7 +620,7 @@ searchInput: {
   paddingVertical: 6,
   marginHorizontal: 15,
   marginBottom: 15,
-  marginTop: Platform.OS === 'ios' ? -35 : 0,  // Add this line
+  marginTop: Platform.OS === 'ios' ? -35 : 0,
   borderRadius: 25,
   fontSize: 16,
   fontFamily: "Poppins-Regular",

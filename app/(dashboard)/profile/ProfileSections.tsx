@@ -22,6 +22,7 @@ import { User, Community } from "@/api/profile/profileActions";
 import { useProfileSections } from "./_components/useProfileSections";
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 
 const { height } = Dimensions.get("window");
 
@@ -37,6 +38,10 @@ export default function ProfileSections() {
 
   const userName = params.userName || "User";
   const initialSection = (params.section as any) || "followers";
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
   const {
     activeSection,
@@ -307,15 +312,18 @@ export default function ProfileSections() {
         </ScrollView>
 
         {/* Search Bar - Black background, smaller size, less border radius, no search icon */}
-        <View className="px-6 py-1">
-          <View className="bg-black border border-gray-600 rounded-full px-5 py-3">
+        <View className={deviceInfo.isTabletDevice ? "py-1" : "px-6 py-1"} style={deviceInfo.isTabletDevice ? responsiveStyles.containerPadding : {}}>
+          <View 
+            className="bg-black border border-gray-600 rounded-full px-5 py-3" 
+            style={deviceInfo.isTabletDevice ? responsiveStyles.searchInput : {}}
+          >
             <TextInput
-              className="text-white text-m"
+              className={deviceInfo.isTabletDevice ? "text-white" : "text-white text-m"}
               placeholder="Search..."
               placeholderTextColor="gray"
               value={searchQuery}
               onChangeText={setSearchQuery}
-              style={{ fontFamily: "Poppins" }}
+              style={{ fontFamily: "Poppins", fontSize: deviceInfo.isTabletDevice ? 18 : 16 }}
             />
           </View>
         </View>

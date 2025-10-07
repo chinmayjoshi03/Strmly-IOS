@@ -14,7 +14,7 @@ import ProfileTopbar from "@/components/profileTopbar";
 import ActionModal from "./_component/customModal";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useMonetizationStore } from "@/store/useMonetizationStore";
-import { useNavigation } from "expo-router";
+import { useNavigation, router } from "expo-router";
 import Constants from "expo-constants";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -264,6 +264,13 @@ const Setting = () => {
           </View>*/
 
           {/* Action Buttons */}
+          <Pressable
+            onPress={() => router.push("/(dashboard)/wallet")}
+            className="w-full"
+          >
+            <Text className="text-white text-lg">Wallet</Text>
+          </Pressable>
+
           <Pressable
             onPress={() => openModal(modalTypes.support)}
             className="w-full"

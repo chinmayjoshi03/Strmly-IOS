@@ -13,12 +13,7 @@ export const CommunitiesStyles = StyleSheet.create({
         borderColor: "white",
         borderWidth: 1,
         color: "#fff",
-        paddingHorizontal: 10,
-        paddingVertical: 2,
-        marginHorizontal: 8,
-        borderRadius: 15,
         marginBottom: 15,
-        fontSize: 15,
     },
     SelectionTab: {
         display: 'flex',

@@ -26,6 +26,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Constants from "expo-constants";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useVideosStore } from "@/store/useVideosStore";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 
 const { height } = Dimensions.get("window");
 
@@ -48,6 +49,10 @@ export default function PersonalProfilePage() {
   const { setVideosInZustand, appendVideos } = useVideosStore();
 
   const router = useRouter();
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
   // Derive logged-in state from token
   const isLoggedIn = !!token;
@@ -347,9 +352,12 @@ export default function PersonalProfilePage() {
                 </Text>
               </View>
             ) : (
-              <View className="max-w-4xl -mt-28 relative mx-6">
+              <View 
+                className={`max-w-4xl -mt-28 relative ${deviceInfo.isTabletDevice ? '' : 'mx-6'}`}
+                style={deviceInfo.isTabletDevice ? responsiveStyles.profileContainer : {}}
+              >
                 <View className="flex flex-col items-center md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
-                  <View className="relative">
+                  <View className="relative" style={responsiveStyles.profilePictureContainer}>
                     <Image
                       source={{
                         uri: getProfilePhotoUrl(
@@ -357,14 +365,14 @@ export default function PersonalProfilePage() {
                           "user"
                         ),
                       }}
-                      style={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: 40,
-                        borderWidth: 2,
-                        borderColor: "white",
-                        resizeMode: "cover",
-                      }}
+                      style={[
+                        deviceInfo.isTabletDevice ? responsiveStyles.profilePictureSize : responsiveStyles.profilePictureSizePhone,
+                        {
+                          borderWidth: 2,
+                          borderColor: "white",
+                          resizeMode: "cover",
+                        }
+                      ]}
                     />
 
                     <View className="flex flex-row gap-2 items-center justify-center mt-2">
@@ -382,7 +390,10 @@ export default function PersonalProfilePage() {
                 </View>
 
                 {/* Stats */}
-                <View className="mt-6 flex-row justify-around items-center">
+                <View 
+                  className={`mt-6 flex-row items-center ${deviceInfo.isTabletDevice ? 'justify-between' : 'justify-around'}`} 
+                  style={deviceInfo.isTabletDevice ? responsiveStyles.statsContainer : {}}
+                >
                   <TouchableOpacity
                     className="flex flex-col gap-1 items-center"
                     onPress={() =>
@@ -436,7 +447,10 @@ export default function PersonalProfilePage() {
                   </TouchableOpacity>
                 </View>
 
-                <View className="flex flex-row w-full items-center justify-center gap-2 mt-5">
+                <View 
+                  className="flex flex-row w-full items-center justify-center mt-5"
+                  style={deviceInfo.isTabletDevice ? responsiveStyles.buttonRowSpacing : responsiveStyles.buttonRowSpacingPhone}
+                >
                   {/* My Community Button */}
                   <TouchableOpacity
                     onPress={() =>
@@ -448,9 +462,10 @@ export default function PersonalProfilePage() {
                         },
                       })
                     }
-                    className="px-4 py-2 rounded-lg border  border-gray-400 "
+                    className="px-4 py-2 rounded-lg border border-gray-400"
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
-                    <Text className="text-white text-center">
+                    <Text className="text-white text-center" style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : responsiveStyles.buttonTextSizePhone}>
                       My Community
                     </Text>
                   </TouchableOpacity>
@@ -460,33 +475,40 @@ export default function PersonalProfilePage() {
                     onPress={() =>
                       router.push("/(dashboard)/profile/Dashboard")
                     }
-                    className="px-4 py-2 rounded-lg border  border-gray-400 " // Use rounded-md for consistency
+                    className="px-4 py-2 rounded-lg border border-gray-400"
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
-                    <Text className="text-white text-center">
+                    <Text className="text-white text-center" style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : responsiveStyles.buttonTextSizePhone}>
                       Dashboard
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <View className="flex-1 flex-row w-full items-center justify-center gap-2 mt-5">
+                <View 
+                  className="flex-1 flex-row w-full items-center justify-center mt-5"
+                  style={deviceInfo.isTabletDevice ? responsiveStyles.buttonRowSpacing : responsiveStyles.buttonRowSpacingPhone}
+                >
                   <TouchableOpacity
                     onPress={() => router.push("/Profile/EditProfile")}
                     className="px-4 py-2 border border-gray-400 rounded-lg"
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
-                    <Text className="text-white text-center">Edit Profile</Text>
+                    <Text className="text-white text-center" style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : responsiveStyles.buttonTextSizePhone}>Edit Profile</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => router.push("/(dashboard)/profile/History")}
                     className="px-4 py-2 border border-gray-400 rounded-lg"
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
-                    <Text className="text-white text-center">History</Text>
+                    <Text className="text-white text-center" style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : responsiveStyles.buttonTextSizePhone}>History</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={() => router.push("/(dashboard)/profile/access")}
                     className="px-4 py-2 border border-gray-400 rounded-lg"
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
-                    <Text className="text-white text-center">Access</Text>
+                    <Text className="text-white text-center" style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : responsiveStyles.buttonTextSizePhone}>Access</Text>
                   </TouchableOpacity>
                 </View>
 

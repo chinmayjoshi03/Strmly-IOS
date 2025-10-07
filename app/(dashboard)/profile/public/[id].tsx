@@ -26,6 +26,7 @@ import { router, useFocusEffect } from "expo-router";
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useVideosStore } from "@/store/useVideosStore";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 import { set } from "lodash";
 
 const { height } = Dimensions.get("window");
@@ -50,6 +51,10 @@ export default function PublicProfilePageWithId() {
   const [hasMore, setHasMore] = useState(true);
   const { token } = useAuthStore();
   const { setVideosInZustand, appendVideos } = useVideosStore();
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
   const BACKEND_API_URL = Constants.expoConfig?.extra?.BACKEND_API_URL;
 
@@ -418,10 +423,16 @@ export default function PublicProfilePageWithId() {
                       <ActivityIndicator size="large" color="#F1C40F" />
                     </View>
                   ) : (
-                    <View className="max-w-4xl -mt-32 relative mx-6">
+                    <View 
+                      className={`max-w-4xl -mt-32 relative ${deviceInfo.isTabletDevice ? '' : 'mx-6'}`}
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.profileContainer : {}}
+                    >
                       <View className="flex flex-col items-center md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
-                        <View className="items-center">
-                          <View className="size-24 border-white border rounded-full overflow-hidden">
+                        <View className="items-center" style={deviceInfo.isTabletDevice ? responsiveStyles.profilePictureContainer : {}}>
+                          <View 
+                            className={`border-white border rounded-full overflow-hidden ${deviceInfo.isTabletDevice ? '' : 'size-24'}`}
+                            style={deviceInfo.isTabletDevice ? responsiveStyles.profilePictureSize : {}}
+                          >
                             <Image
                               source={{
                                 uri: getProfilePhotoUrl(
@@ -449,7 +460,8 @@ export default function PublicProfilePageWithId() {
 
                       {/* Stats */}
                       <View
-                        className={`mt-6 flex-row items-center ${userData?.userDetails?.creator_profile?.creator_pass_price !== 0 && !hasCreatorPass ? "justify-evenly gap-4" : "justify-center gap-5"}`}
+                        className={`mt-6 flex-row items-center ${userData?.userDetails?.creator_profile?.creator_pass_price !== 0 && !hasCreatorPass ? "justify-evenly" : "justify-center"} ${deviceInfo.isTabletDevice ? '' : userData?.userDetails?.creator_profile?.creator_pass_price !== 0 && !hasCreatorPass ? 'gap-4' : 'gap-5'}`}
+                        style={deviceInfo.isTabletDevice ? responsiveStyles.statsContainer : {}}
                       >
                         <TouchableOpacity
                           className="text-center items-center"

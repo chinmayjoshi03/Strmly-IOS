@@ -28,6 +28,7 @@ import CommunityPassBuyMessage from "./CommPassBuyMessage";
 import { useGiftingStore } from "@/store/useGiftingStore";
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 import { useVideosStore } from "@/store/useVideosStore";
 
 const { height } = Dimensions.get("window");
@@ -47,6 +48,10 @@ export default function PublicCommunityPage() {
 
   const { token, user } = useAuthStore();
   const { setVideosInZustand } = useVideosStore();
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
   const {
     isPurchasedCommunityPass,
@@ -612,9 +617,9 @@ export default function PublicCommunityPage() {
 
                 {/* Search Bar - Only show for followers and creators */}
                 {(activeTab === "followers" || activeTab === "creators") && (
-                  <View className="mt-4 px-4">
-                    <View className="bg-gray-800 rounded-lg px-4 py-3 flex-row items-center">
-                      <Text className="text-gray-400 flex-1">Search...</Text>
+                  <View className="mt-4" style={responsiveStyles.containerPadding}>
+                    <View className="bg-gray-800 rounded-lg flex-row items-center" style={responsiveStyles.searchInput}>
+                      <Text className="text-gray-400 flex-1" style={{ fontSize: deviceInfo.isTabletDevice ? 18 : 16 }}>Search...</Text>
                     </View>
                   </View>
                 )}
