@@ -114,7 +114,7 @@ const VideoProgressBar = ({
 
   // Add persistent interval ref to prevent cleanup issues
   const timeTrackingInterval = useRef<NodeJS.Timeout | number | null>(null);
-  
+
   // Add animation frame ref for iOS
   const animationFrameRef = useRef<number | null>(null);
 
@@ -201,7 +201,7 @@ const VideoProgressBar = ({
       handleInitialSeekComplete();
       return;
     }
-    
+
     // For videos with start time, VideoPlayer will handle the seek and call onInitialSeekComplete
     if (isVideoReady && !hasPerformedInitialSeek && isActive && initialStartTime > 0) {
       console.log(`VideoProgressBar: Waiting for VideoPlayer to handle initial seek for video ${videoId} (start time: ${initialStartTime}s)`);
@@ -254,7 +254,7 @@ const VideoProgressBar = ({
       setDragTime(null);
       dragTimeRef.current = null;
       hasUserInteracted.current = false;
-      
+
       // Clear any pending timeouts and animation frames
       if (initialSeekTimeout.current) {
         clearTimeout(initialSeekTimeout.current);
@@ -393,7 +393,7 @@ const VideoProgressBar = ({
         access?.isPurchased ||
         haveCreator,
     });
-    
+
     // Clear any existing interval or animation frame
     if (timeTrackingInterval.current) {
       clearInterval(timeTrackingInterval.current);
@@ -418,7 +418,7 @@ const VideoProgressBar = ({
 
     // iOS-specific: Use requestAnimationFrame for smoother updates
     let lastUpdateTime = 0;
-    
+
     const updateTime = () => {
       if (!isMounted.current || !player) {
         return;
@@ -427,7 +427,7 @@ const VideoProgressBar = ({
       try {
         const now = Date.now();
         const currentPlayerTime = player.currentTime || 0;
-        
+
         // Debug: Check if player is actually playing
         const isPlaying = !player.muted && player.playing;
         if (!isPlaying && currentPlayerTime === 0) {
@@ -435,19 +435,19 @@ const VideoProgressBar = ({
         }
 
         // iOS Fix: Throttle updates but ensure smooth progress
-        const shouldUpdate = Platform.OS === 'ios' 
+        const shouldUpdate = Platform.OS === 'ios'
           ? (now - lastUpdateTime > 50) // 20fps for iOS
           : (now - lastUpdateTime > 100); // 10fps for Android
 
         if (shouldUpdate) {
           lastUpdateTime = now;
-          
+
           // iOS Fix: Only update UI time if not currently dragging to prevent conflicts
           if (!isDragging) {
             setCurrentTime(currentPlayerTime);
             // Debug logging for progress tracking
             if (Math.floor(currentPlayerTime) % 5 === 0 && currentPlayerTime > 0) {
-              console.log(`VideoProgressBar ${videoId}: Time update - ${currentPlayerTime.toFixed(1)}s / ${duration}s`);
+              // console.log(`VideoProgressBar ${videoId}: Time update - ${currentPlayerTime.toFixed(1)}s / ${duration}s`);
             }
           }
 
@@ -503,13 +503,13 @@ const VideoProgressBar = ({
     } else {
       timeTrackingInterval.current = setInterval(() => {
         if (!isMounted.current || !player) return;
-        
+
         try {
           const currentPlayerTime = player.currentTime || 0;
           if (!isDragging) {
             setCurrentTime(currentPlayerTime);
           }
-          
+
           const isPremiumVideo = endTime < duration && endTime > 0;
           const userHasFullAccess =
             hasAccessRef.current ||
@@ -570,15 +570,15 @@ const VideoProgressBar = ({
     if (!isDragging && player && isActive) {
       // iOS needs more time for seek operations to complete
       const syncDelay = Platform.OS === 'ios' ? 300 : 50;
-      
+
       const syncTimeout = setTimeout(() => {
         if (isMounted.current && player) {
           const actualTime = player.currentTime || 0;
           setCurrentTime(actualTime);
-          
+
           if (Platform.OS === 'ios') {
             console.log("iOS post-drag sync - actualTime:", actualTime);
-            
+
             // iOS-specific: Additional verification and correction
             const timeDifference = Math.abs(actualTime - currentTime);
             if (timeDifference > 1.0) {
@@ -587,7 +587,7 @@ const VideoProgressBar = ({
                 actualTime,
                 difference: timeDifference
               });
-              
+
               // Force another sync after a brief delay
               setTimeout(() => {
                 if (isMounted.current && player) {
@@ -664,7 +664,7 @@ const VideoProgressBar = ({
 
   const handleShowPaidButton = () => {
     handleAccessModalClose();
-    
+
     if (!videoData) {
       // Fallback to showing buy option if video data is not available
       showBuyOption(true);
@@ -672,14 +672,14 @@ const VideoProgressBar = ({
     }
 
     const { initiateGifting } = useGiftingStore.getState();
-    
+
     // Initialize gifting store with video data
     initiateGifting(videoData.created_by, videoData._id);
 
     // Determine purchase flow based on video type and series
     const series = videoData.series;
     const videoAmount = videoData.amount || access.price || 0;
-    
+
     if (series && series.type !== "Free") {
       // Navigate to series purchase
       router.push({
@@ -780,7 +780,7 @@ const VideoProgressBar = ({
 
         dragTimeRef.current = newTime;
         setDragTime(newTime);
-        
+
         // iOS-specific: Mark user interaction to prevent conflicts with initial seek
         if (Platform.OS === 'ios') {
           hasUserInteracted.current = true;
@@ -804,20 +804,20 @@ const VideoProgressBar = ({
               // Pause the player first and wait for it to actually pause
               player.pause();
               await new Promise(resolve => setTimeout(resolve, 100));
-              
+
               // Perform the seek operation
               player.currentTime = finalTime;
-              
+
               // Immediately update local state to prevent UI lag
               setCurrentTime(finalTime);
-              
+
               // Wait for seek to complete and verify
               await new Promise(resolve => setTimeout(resolve, 200));
-              
+
               // Verify the seek operation worked
               const actualTime = player.currentTime || 0;
               const timeDifference = Math.abs(actualTime - finalTime);
-              
+
               if (timeDifference > 1.0) {
                 // If seek didn't work properly, try again with a longer delay
                 console.log("iOS seek verification failed, retrying...", {
@@ -825,13 +825,13 @@ const VideoProgressBar = ({
                   actual: actualTime,
                   difference: timeDifference
                 });
-                
+
                 // Try the seek operation again
                 player.currentTime = finalTime;
                 setCurrentTime(finalTime);
                 await new Promise(resolve => setTimeout(resolve, 300));
               }
-              
+
               // Resume playback
               if (isMounted.current && player) {
                 player.play();
@@ -841,7 +841,7 @@ const VideoProgressBar = ({
               player.pause();
               player.currentTime = finalTime;
               setCurrentTime(finalTime);
-              
+
               setTimeout(() => {
                 if (isMounted.current && player) {
                   player.play();

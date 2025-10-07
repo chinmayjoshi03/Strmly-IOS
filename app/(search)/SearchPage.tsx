@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ImageBackground,
   ScrollView,
-  BackHandler,
   Platform,
 } from "react-native";
 import { useFonts } from "expo-font";
@@ -20,8 +19,9 @@ import ThemedText from "@/components/ThemedText";
 import { useSearch } from "./hooks/useSearch";
 import { communityActions } from "@/api/community/communityActions";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useVideosStore } from "@/store/useVideosStore";
 import { CONFIG } from "@/Constants/config";
-import VideoPlayer from "@/app/(dashboard)/long/_components/VideoPlayer";
+
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -36,16 +36,12 @@ const SearchScreen: React.FC = () => {
   const [trendingLoading, setTrendingLoading] = useState<boolean>(false);
   const [trendingError, setTrendingError] = useState<string>("");
 
-  // Video player state
-  const [isVideoPlayerActive, setIsVideoPlayerActive] = useState(false);
-  const [currentVideoData, setCurrentVideoData] = useState<any>(null);
-  const [currentVideoList, setCurrentVideoList] = useState<any[]>([]);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [showCommentsModal, setShowCommentsModal] = useState(false);
+
 
   const tabs = ["Videos", "Accounts", "Communities"];
 
   const { token } = useAuthStore();
+  const { setVideosInZustand } = useVideosStore();
   const {
     searchResults,
     isLoading: searchLoading,
@@ -72,22 +68,7 @@ const SearchScreen: React.FC = () => {
   //     loadTrendingVideos();
   // }, []);
 
-  // Handle back button press
-  useEffect(() => {
-    const backAction = () => {
-      if (isVideoPlayerActive) {
-        closeVideoPlayer();
-        return true; // Prevent default back action
-      }
-      return false; // Allow default back action
-    };
 
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
-    return () => backHandler.remove();
-  }, [isVideoPlayerActive]);
 
   // Handle search with debouncing
   useEffect(() => {
@@ -198,32 +179,33 @@ const SearchScreen: React.FC = () => {
       "🎬 Opening video player for:",
       videoData.title || videoData.name
     );
+    
     // Find the index of the current video in the array
     const currentIndex = allVideos.findIndex(
       (video) => video._id === videoData._id
     );
 
-    // Set video player state to show the integrated player
-    setCurrentVideoData(videoData);
-    setCurrentVideoList(allVideos);
-    setCurrentVideoIndex(currentIndex >= 0 ? currentIndex : 0);
-    setIsVideoPlayerActive(true);
-  };
-
-  const closeVideoPlayer = () => {
-    setIsVideoPlayerActive(false);
-    setCurrentVideoData(null);
-    setCurrentVideoList([]);
-    setCurrentVideoIndex(0);
-    setShowCommentsModal(false);
-  };
-
-  // Define the viewable items changed callback at component level
-  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) {
-      setCurrentVideoIndex(viewableItems[0].index);
+    // Navigate to GlobalVideoPlayer like personal/public profiles do
+    try {
+      // Store videos in the videos store (similar to how profiles do it)
+      setVideosInZustand(allVideos);
+      
+      // Navigate to GlobalVideoPlayer with the current video index
+      router.push({
+        pathname: "/(dashboard)/long/GlobalVideoPlayer",
+        params: {
+          startIndex: (currentIndex >= 0 ? currentIndex : 0).toString(),
+          videoType: "search"
+        }
+      });
+    } catch (error) {
+      console.error("Error navigating to GlobalVideoPlayer:", error);
+      // Show an alert or toast to the user
+      console.log("Failed to open video player. Please try again.");
     }
-  }, []);
+  };
+
+
 
   // Render video items with thumbnail styling
   const renderVideoItem = ({ item }: { item: any }) => {
@@ -584,39 +566,7 @@ const renderAccountItem = ({ item }: { item: any }) => {
           />
         )}
 
-        {/* Integrated Video Player */}
-        {isVideoPlayerActive && currentVideoData && (
-          <View style={styles.videoPlayerOverlay}>
-            <FlatList
-              data={currentVideoList}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item, index }) => (
-                <VideoPlayer
-                  isGlobalPlayer={false}
-                  key={`${item._id}-${index === currentVideoIndex}`}
-                  videoData={item}
-                  isActive={index === currentVideoIndex}
-                  showCommentsModal={showCommentsModal}
-                  setShowCommentsModal={setShowCommentsModal}
-                />
-              )}
-              style={{ flex: 1 }}
-              getItemLayout={(_, index) => ({
-                length: Dimensions.get("screen").height,
-                offset: Dimensions.get("screen").height * index,
-                index,
-              })}
-              initialScrollIndex={currentVideoIndex}
-              pagingEnabled
-              onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
-              decelerationRate="fast"
-              showsVerticalScrollIndicator={false}
-              snapToInterval={Dimensions.get("screen").height}
-              snapToAlignment="start"
-            />
-          </View>
-        )}
+
       </View>
     </SafeAreaView>
   );
@@ -872,16 +822,7 @@ searchInput: {
     fontFamily: "Poppins-Light",
   },
 
-  // Video player overlay
-  videoPlayerOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "black",
-    zIndex: 1000,
-  },
+
 });
 
 export default SearchScreen;
