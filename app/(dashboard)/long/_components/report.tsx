@@ -317,6 +317,7 @@ const handleSubmitReport = async () => {
                 : "bg-red-600"
             }`}
             activeOpacity={0.8}
+            
           >
             {isSubmitting ? (
               <ActivityIndicator color="white" />
