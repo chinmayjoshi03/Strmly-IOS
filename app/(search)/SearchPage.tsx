@@ -445,7 +445,7 @@ const renderAccountItem = ({ item }: { item: any }) => {
 
   return (
     <SafeAreaView style={{ height: page_height, backgroundColor: "black" }} edges={['top']}>
-      <View style={{ ...styles.container, height: page_height }}>
+      <View style={{ ...styles.container, ...responsiveStyles.searchPageContainer, height: page_height }}>
 
         <TextInput
           placeholder="Search"

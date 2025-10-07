@@ -46,6 +46,7 @@ export const getResponsiveStyles = () => {
       paddingVertical: isLargeIPad ? 15 : isTabletDevice ? 12 : 6,
       fontSize: isLargeIPad ? 20 : isTabletDevice ? 18 : 16,
       borderRadius: isLargeIPad ? 35 : isTabletDevice ? 30 : 25,
+      marginTop: isLargeIPad ? 20 : isTabletDevice ? 15 : 0,
     },
     
     // Container padding
@@ -131,6 +132,11 @@ export const getResponsiveStyles = () => {
       marginHorizontal: isLargeIPad ? 30 : isTabletDevice ? 25 : 20,
       paddingVertical: isTabletDevice ? 12 : 8,
       paddingHorizontal: isTabletDevice ? 12 : 8,
+    },
+    
+    // Search page container for iPad
+    searchPageContainer: {
+      paddingTop: isTabletDevice ? 20 : 0,
     },
     
     // Community stats text size
