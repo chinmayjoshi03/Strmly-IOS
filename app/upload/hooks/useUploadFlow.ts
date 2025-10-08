@@ -62,6 +62,7 @@ export const useUploadFlow = () => {
     videoDetails: initialVideoDetails,
     finalStageData: initialFinalStageData,
     selectedFile: null,
+    selectedThumbnail: null,
     videoFormat: null,
     selectedSeries: null,
     isUploading: false,
@@ -107,6 +108,9 @@ export const useUploadFlow = () => {
           nextStep = "file-select"; // File selection is now the last step
           break;
         case "file-select":
+          nextStep = "thumbnail-select"; // Add thumbnail selection after file selection
+          break;
+        case "thumbnail-select":
           nextStep = "progress";
           break;
         case "progress":
@@ -156,6 +160,9 @@ export const useUploadFlow = () => {
           // When creating new video, this should not happen as file-select is last
           prevStep = prev.isEditingDraft ? "final" : "final";
           break;
+        case "thumbnail-select":
+          prevStep = "file-select";
+          break;
       }
 
       return { ...prev, currentStep: prevStep };
@@ -183,6 +190,14 @@ export const useUploadFlow = () => {
     setState((prev) => ({
       ...prev,
       selectedFile: file,
+    }));
+  }, []);
+
+  // Set selected thumbnail
+  const setSelectedThumbnail = useCallback((thumbnail: any) => {
+    setState((prev) => ({
+      ...prev,
+      selectedThumbnail: thumbnail,
     }));
   }, []);
 
@@ -390,6 +405,8 @@ export const useUploadFlow = () => {
         return finalStageData.genre !== null;
       case "file-select":
         return selectedFile !== null;
+      case "thumbnail-select":
+        return true; // Thumbnail is optional, so always valid
       default:
         return true;
     }
@@ -520,13 +537,13 @@ export const useUploadFlow = () => {
       });
 
       // append thumbnail if exists
-      // if (state.videoDetails.thumbnail) {
-      //   formData.append("thumbnail", {
-      //     uri: state.videoDetails.thumbnail.uri,
-      //     name: state.videoDetails.thumbnail.fileName ?? "thumbnail.jpg",
-      //     type: state.videoDetails.thumbnail.mimeType ?? "image/jpeg",
-      //   } as any);
-      // }
+      if (state.selectedThumbnail) {
+        formData.append("thumbnail", {
+          uri: state.selectedThumbnail.uri,
+          name: state.selectedThumbnail.fileName ?? "thumbnail.jpg",
+          type: state.selectedThumbnail.mimeType ?? "image/jpeg",
+        } as any);
+      }
 
       if (state.videoFormat === "episode" && state.selectedSeries) {
         // override what metadata already set
@@ -580,6 +597,7 @@ export const useUploadFlow = () => {
       videoDetails: initialVideoDetails,
       finalStageData: initialFinalStageData,
       selectedFile: null,
+      selectedThumbnail: null,
       videoFormat: null,
       selectedSeries: null,
       isUploading: false,
@@ -598,6 +616,7 @@ export const useUploadFlow = () => {
     updateVideoDetails,
     updateFinalStageData,
     setSelectedFile,
+    setSelectedThumbnail,
     setVideoFormat,
     setSelectedSeries,
     validateCurrentStep,
