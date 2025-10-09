@@ -264,12 +264,12 @@ const Setting = () => {
           </View>*/
 
           {/* Action Buttons */}
-          <Pressable
+          {/* <Pressable
             onPress={() => router.push("/(dashboard)/wallet")}
             className="w-full"
           >
             <Text className="text-white text-lg">Wallet</Text>
-          </Pressable>
+          </Pressable> */}
 
           <Pressable
             onPress={() => openModal(modalTypes.support)}

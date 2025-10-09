@@ -409,7 +409,7 @@ const reportVideo = async () => {
           <Text className="text-white text-sm">{reshares}</Text>
         </View> */}
 
-        <View className="items-center gap-1">
+        {/* <View className="items-center gap-1">
           <Pressable onPress={openGifting}>
             <Image
               className="size-7"
@@ -417,7 +417,7 @@ const reportVideo = async () => {
             />
           </Pressable>
           <Text className="text-white text-sm">{gift}</Text>
-        </View>
+        </View> */}
 
         {/* NEW: Report Button */}
         <View className="items-center gap-1">

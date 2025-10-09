@@ -43,10 +43,10 @@ export const videoTypeOptions: DropdownOption[] = [
     label: 'Free',
     value: 'free',
   },
-  {
-    label: 'Paid',
-    value: 'paid',
-  },
+  // {
+  //   label: 'Paid',
+  //   value: 'paid',
+  // },
 ];
 
 // Genre options for video classification - dynamic based on format selection

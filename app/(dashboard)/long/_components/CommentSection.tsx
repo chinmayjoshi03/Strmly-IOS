@@ -755,16 +755,16 @@ const CommentsSection = ({
                   justifyContent: "center",
                 }}
               >
-                <MaterialIcons
+                {/* <MaterialIcons
                   name="currency-rupee"
                   size={20}
                   color={
                     item.donations && item.donations > 0 ? "#FFD24D" : "#FFFFFF"
                   }
-                />
-                <Text style={{ color: "#9E9E9E", fontSize: 12, marginTop: 2 }}>
+                /> */}
+                {/* <Text style={{ color: "#9E9E9E", fontSize: 12, marginTop: 2 }}>
                   {item.donations || 0}
-                </Text>
+                </Text> */}
                 {/* Debug: Show what we're rendering */}
               </TouchableOpacity>
             )}

@@ -700,13 +700,13 @@ export default function PersonalProfilePage() {
                     <Text className="text-white text-center" style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : responsiveStyles.buttonTextSizePhone}>History</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={() => router.push("/(dashboard)/profile/access")}
                     className="px-4 py-2 border border-gray-400 rounded-lg"
                     style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
                     <Text className="text-white text-center" style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : responsiveStyles.buttonTextSizePhone}>Access</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
 
                 {/* Bio */}

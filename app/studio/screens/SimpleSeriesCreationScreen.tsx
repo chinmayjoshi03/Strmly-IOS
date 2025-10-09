@@ -13,7 +13,7 @@ import { createSeries } from '../../../api/series/seriesActions';
 import { Series } from '../types';
 
 interface SimpleSeriesCreationScreenProps {
-  onBack: () => void;
+  onBack: () => void; 
   onSeriesCreated: (series: Series) => void;
   onThumbnailSelect: (seriesData: any) => void;
 }
@@ -176,7 +176,7 @@ const SimpleSeriesCreationScreen: React.FC<SimpleSeriesCreationScreenProps> = ({
                   >
                     <Text className="text-white text-lg">Free</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={() => handleTypeSelect('paid')}
                     className="px-6 py-4"
                     style={{
@@ -187,7 +187,7 @@ const SimpleSeriesCreationScreen: React.FC<SimpleSeriesCreationScreenProps> = ({
                     }}
                   >
                     <Text className="text-white text-lg">Paid</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
               )}
 

@@ -49,7 +49,7 @@ const CreateCommunityPage: React.FC = () => {
 
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  const options = ["Free", "Paid"];
+  const options = ["Free"];
 
   const handleSelect = (value: string) => {
     setSelected(value);

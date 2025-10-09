@@ -840,12 +840,12 @@ const VideoPlayer = ({
         <View
           className={`z-10 absolute left-5 ${showWallet ? "top-10" : "top-14"}`}
         >
-          <Pressable onPress={() => router.push("/(dashboard)/wallet")}>
+          {/* <Pressable onPress={() => router.push("/(dashboard)/wallet")}>
             <Image
               source={require("../../../../assets/images/Wallet.png")}
               className="size-10"
             />
-          </Pressable>
+          </Pressable> */}
         </View>
       )}
 

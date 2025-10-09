@@ -529,10 +529,15 @@ const EditProfilePage: React.FC = () => {
               <TouchableOpacity
                 style={EditProfile.overlay}
                 onPress={() => setVisible(false)}
+                activeOpacity={1}
               >
-                <View style={EditProfile.dropdownBox}>
+                <TouchableOpacity
+                  style={EditProfile.dropdownBox}
+                  activeOpacity={1}
+                  onPress={(e) => e.stopPropagation()}
+                >
                   {dropdownType === "interest1" ||
-                  dropdownType === "interest2" ? (
+                    dropdownType === "interest2" ? (
                     // Multi-select for interests
                     <>
                       <View
@@ -555,48 +560,54 @@ const EditProfilePage: React.FC = () => {
                             : `${interest2.length}/3 selected`}
                         </ThemedText>
                       </View>
-                      {getDropdownOptions().map((item) => {
-                        const isSelected =
-                          dropdownType === "interest1"
-                            ? interest1.includes(item)
-                            : interest2.includes(item);
-                        return (
-                          <TouchableOpacity
-                            key={item}
-                            style={[
-                              EditProfile.dropdownItem,
-                              { flexDirection: "row", alignItems: "center" },
-                            ]}
-                            onPress={() => handleSelect(item)}
-                          >
-                            <View
-                              style={{
-                                width: 20,
-                                height: 20,
-                                borderWidth: 2,
-                                borderColor: isSelected ? "#007AFF" : "#666",
-                                backgroundColor: isSelected
-                                  ? "#007AFF"
-                                  : "transparent",
-                                marginRight: 10,
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
+                      <ScrollView
+                        style={{ maxHeight: 300 }}
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled={true}
+                      >
+                        {getDropdownOptions().map((item) => {
+                          const isSelected =
+                            dropdownType === "interest1"
+                              ? interest1.includes(item)
+                              : interest2.includes(item);
+                          return (
+                            <TouchableOpacity
+                              key={item}
+                              style={[
+                                EditProfile.dropdownItem,
+                                { flexDirection: "row", alignItems: "center" },
+                              ]}
+                              onPress={() => handleSelect(item)}
                             >
-                              {isSelected && (
-                                <ThemedText
-                                  style={{ color: "#fff", fontSize: 12 }}
-                                >
-                                  ✓
-                                </ThemedText>
-                              )}
-                            </View>
-                            <ThemedText style={EditProfile.dropdownItemText}>
-                              {item}
-                            </ThemedText>
-                          </TouchableOpacity>
-                        );
-                      })}
+                              <View
+                                style={{
+                                  width: 20,
+                                  height: 20,
+                                  borderWidth: 2,
+                                  borderColor: isSelected ? "#007AFF" : "#666",
+                                  backgroundColor: isSelected
+                                    ? "#007AFF"
+                                    : "transparent",
+                                  marginRight: 10,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                {isSelected && (
+                                  <ThemedText
+                                    style={{ color: "#fff", fontSize: 12 }}
+                                  >
+                                    ✓
+                                  </ThemedText>
+                                )}
+                              </View>
+                              <ThemedText style={EditProfile.dropdownItemText}>
+                                {item}
+                              </ThemedText>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
                       <TouchableOpacity
                         style={[
                           EditProfile.dropdownItem,
@@ -616,19 +627,25 @@ const EditProfilePage: React.FC = () => {
                     </>
                   ) : (
                     // Single select for other dropdowns
-                    getDropdownOptions().map((item) => (
-                      <TouchableOpacity
-                        key={item}
-                        style={EditProfile.dropdownItem}
-                        onPress={() => handleSelect(item)}
-                      >
-                        <ThemedText style={EditProfile.dropdownItemText}>
-                          {item}
-                        </ThemedText>
-                      </TouchableOpacity>
-                    ))
+                    <ScrollView
+                      style={{ maxHeight: 300 }}
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled={true}
+                    >
+                      {getDropdownOptions().map((item) => (
+                        <TouchableOpacity
+                          key={item}
+                          style={EditProfile.dropdownItem}
+                          onPress={() => handleSelect(item)}
+                        >
+                          <ThemedText style={EditProfile.dropdownItemText}>
+                            {item}
+                          </ThemedText>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
                   )}
-                </View>
+                </TouchableOpacity>
               </TouchableOpacity>
             </Modal>
 
@@ -643,21 +660,21 @@ const EditProfilePage: React.FC = () => {
             </TouchableOpacity> */}
 
             {/* Creator Pass Button */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={EditProfile.CreatorPassButton}
               onPress={() => router.push("/Profile/CreatorPass")}
             >
               <ThemedText style={EditProfile.CreatorPassText}>
                 Add "CREATOR PASS"
               </ThemedText>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Extra Info */}
             <View style={{ marginTop: 10, paddingHorizontal: 20 }}>
-              <ThemedText style={EditProfile.ExtraInfo}>
+              {/* <ThemedText style={EditProfile.ExtraInfo}>
                 Unlock Creator pass for your fans. All your paid content will be
                 freely available to users who purchase your Creator Pass.
-              </ThemedText>
+              </ThemedText> */}
             </View>
           </View>
         </ScrollView>
