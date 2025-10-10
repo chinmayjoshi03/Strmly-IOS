@@ -22,7 +22,7 @@ import { router } from "expo-router";
 
 import VideoUploadFlow from "../upload/VideoUploadFlow";
 import { SeriesSelectionScreen, SeriesAnalyticsScreen } from "./screens";
-import SimpleSeriesCreationScreen from "./screens/SimpleSeriesCreationScreen";
+import SeriesCreationFlow from "./screens/SeriesCreationFlow";
 import SeriesDetailsScreen from "./screens/SeriesDetailsScreen";
 import { Series } from "./types";
 import { useStudioDrafts } from "./hooks/useStudioDrafts";
@@ -264,9 +264,9 @@ const StrmlyStudio = () => {
   }
 
   if (currentScreen === "series-creation") {
-    console.log("🎬 Rendering SimpleSeriesCreationScreen");
+    console.log("🎬 Rendering SeriesCreationFlow");
     return (
-      <SimpleSeriesCreationScreen
+      <SeriesCreationFlow
         onBack={handleSeriesCreationBack}
         onSeriesCreated={handleSeriesCreated}
       />

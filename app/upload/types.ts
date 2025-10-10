@@ -21,11 +21,12 @@ export interface FinalStageData {
 }
 
 export interface UploadFlowState {
-  currentStep: 'file-select' | 'format-select' | 'episode-selection' | 'series-selection' | 'series-creation' | 'details-1' | 'details-2' | 'details-3' | 'final' | 'progress';
+  currentStep: 'file-select' | 'format-select' | 'episode-selection' | 'series-selection' | 'series-creation' | 'details-1' | 'details-2' | 'details-3' | 'final' | 'thumbnail-select' | 'progress';
   uploadProgress: number;
   videoDetails: VideoFormData;
   finalStageData: FinalStageData;
   selectedFile: any; // Video file object
+  selectedThumbnail: any | null; // Thumbnail image object
   videoFormat: 'episode' | 'single' | null;
   selectedSeries: any | null; // Series object for episodes
   isUploading: boolean;

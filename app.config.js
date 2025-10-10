@@ -6,14 +6,14 @@ export default {
     slug: "strmly",
     scheme: "strmly",
     owner: "strmly-technologies",
-    version: "1.0.7",
+    version: "1.0.8",
     orientation: "portrait",
     icon: "./assets/images/logo3.jpg",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
     ios: {
       bundleIdentifier: "com.anonymous.strmly",
-      buildNumber: "4", 
+      buildNumber: "7",
       supportsTablet: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,

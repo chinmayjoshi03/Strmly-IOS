@@ -4,6 +4,7 @@ import { View, Text, TextInput, FlatList, StatusBar, TouchableOpacity, Image, Sc
 import { useFonts } from "expo-font";
 import ThemedText from "@/components/ThemedText";
 import { CreateProfileStyles } from "@/styles/createprofile";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 
 const data = [
     { id: "1", Name: "Startup india", pageURL: '', Avatar: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80' },
@@ -21,6 +22,10 @@ const data = [
 const CommunitiesPage: React.FC = () => {
     const [selectedTab, setSelectedTab] = useState<number>(0);
     const tabs = ["Followers", "my community", "Communities", "Following"];
+
+    // Get device info and responsive styles
+    const deviceInfo = getDeviceInfo();
+    const responsiveStyles = getResponsiveStyles();
     const [fontsLoaded] = useFonts({
         'Poppins-Regular': require('../../assets/fonts/poppins/Poppins-Regular.ttf'),
         'Poppins-Bold': require('../../assets/fonts/poppins/Poppins-Bold.ttf'),
@@ -87,7 +92,7 @@ const CommunitiesPage: React.FC = () => {
             <TextInput
                 placeholder="Search"
                 placeholderTextColor="#ccc"
-                style={CommunitiesStyles.searchInput}
+                style={[CommunitiesStyles.searchInput, responsiveStyles.searchInput]}
             />
             {(selectedTab === 0) && (
                 <View>

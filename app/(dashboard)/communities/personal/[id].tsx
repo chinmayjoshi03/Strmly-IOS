@@ -28,6 +28,7 @@ import VideoPlayer from "@/app/(dashboard)/long/_components/VideoPlayer";
 import BottomNavBar from "@/components/BottomNavBar";
 import { communityActions } from "@/api/community/communityActions";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 import { useVideosStore } from "@/store/useVideosStore";
 
 export default function PersonalCommunityPage() {
@@ -36,6 +37,10 @@ export default function PersonalCommunityPage() {
   const [videos, setVideos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
   // Video player state
   const [isVideoPlayerActive, setIsVideoPlayerActive] = useState(false);
@@ -326,8 +331,8 @@ export default function PersonalCommunityPage() {
             source={
               item?.profile_photo
                 ? {
-                    uri: item.profile_photo,
-                  }
+                  uri: item.profile_photo,
+                }
                 : require("../../../../assets/images/user.png")
             }
             style={{
@@ -371,28 +376,42 @@ export default function PersonalCommunityPage() {
         ) : (
           <FlatList
             ListHeaderComponent={
-              <View className="max-w-4xl mt-6 relative mx-6 mb-4">
+              <View
+                className={`max-w-4xl mt-6 relative mb-4 ${deviceInfo.isTabletDevice ? '' : 'mx-6'}`}
+                style={deviceInfo.isTabletDevice ? responsiveStyles.profileContainer : {}}
+              >
                 <View className="flex flex-col items-center">
-                  <View className="relative flex-col items-center w-full">
+                  <View className="relative flex-col items-center w-full" style={deviceInfo.isTabletDevice ? responsiveStyles.profilePictureContainer : {}}>
                     <Image
                       source={
                         communityData?.profile_photo
                           ? {
-                              uri: communityData.profile_photo,
-                            }
+                            uri: communityData.profile_photo,
+                          }
                           : require("../../../../assets/images/user.png")
                       }
-                      style={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: 40,
-                        borderWidth: 2,
-                        borderColor: "white",
-                        resizeMode: "cover",
-                      }}
+                      style={
+                        deviceInfo.isTabletDevice
+                          ? [
+                            responsiveStyles.profilePictureSize,
+                            {
+                              borderWidth: 2,
+                              borderColor: "white",
+                              resizeMode: "cover",
+                            }
+                          ]
+                          : {
+                            width: 80,
+                            height: 80,
+                            borderRadius: 40,
+                            borderWidth: 2,
+                            borderColor: "white",
+                            resizeMode: "cover",
+                          }
+                      }
                     />
-                    <View className="flex flex-row items-center justify-center w-full mt-2">
-                      <Text className="text-gray-400">
+                    <View className="flex items-center justify-center w-full mt-2">
+                      <Text className="text-gray-400 text-center">
                         {communityData?.founder &&
                           `By @${communityData?.founder.username}`}
                       </Text>
@@ -401,51 +420,66 @@ export default function PersonalCommunityPage() {
                 </View>
 
                 {/* Section Navigation */}
-                <View className="mt-6 flex flex-row justify-around items-center border-b border-gray-800">
+                <View
+                  className={`mt-6 flex flex-row items-center border-b border-gray-800 ${deviceInfo.isTabletDevice ? 'justify-between' : 'justify-around'}`}
+                  style={deviceInfo.isTabletDevice ? responsiveStyles.statsContainer : {}}
+                >
                   <TouchableOpacity
                     className={`flex flex-col gap-1 items-center pb-4 flex-1 ${activeTab === "followers" ? "border-b-2 border-white" : ""}`}
-                    // onPress={() =>
-                    //   router.push({
-                    //     pathname: "/(communities)/CommunitySections",
-                    //     params: {
-                    //       section: "followers",
-                    //       communityId: communityData._id,
-                    //       communityName: communityData.name,
-                    //     },
-                    //   })
-                    // }
+                  // onPress={() =>
+                  //   router.push({
+                  //     pathname: "/(communities)/CommunitySections",
+                  //     params: {
+                  //       section: "followers",
+                  //       communityId: communityData._id,
+                  //       communityName: communityData.name,
+                  //     },
+                  //   })
+                  // }
                   >
-                    <Text className="font-bold text-lg text-white">
+                    <Text
+                      className="font-bold text-white"
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.communityStatsText : { fontSize: 18 }}
+                    >
                       {communityData?.followers?.length || 0}
                     </Text>
                     <Text
-                      className={`text-md ${activeTab === "followers" ? "text-white" : "text-gray-400"}`}
+                      className={`${activeTab === "followers" ? "text-white" : "text-gray-400"} text-md`}
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.communityStatsLabel : {}}
                     >
                       Followers
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     className={`flex flex-col gap-1 items-center pb-4 flex-1 ${activeTab === "creators" ? "border-b-2 border-white" : ""}`}
-                    // onPress={() => handleSectionChange("creators")}
+                  // onPress={() => handleSectionChange("creators")}
                   >
-                    <Text className="font-bold text-lg text-white">
+                    <Text
+                      className="font-bold text-white"
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.communityStatsText : { fontSize: 18 }}
+                    >
                       {communityData?.creators?.length || 0}
                     </Text>
                     <Text
-                      className={`text-md ${activeTab === "creators" ? "text-white" : "text-gray-400"}`}
+                      className={`${activeTab === "creators" ? "text-white" : "text-gray-400"} text-md`}
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.communityStatsLabel : {}}
                     >
                       Creators
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     className={`flex flex-col gap-1 items-center pb-4 flex-1 ${activeTab === "videos" ? "border-b-2 border-white" : ""}`}
-                    // onPress={() => handleSectionChange("videos")}
+                  // onPress={() => handleSectionChange("videos")}
                   >
-                    <Text className="font-bold text-lg text-white">
+                    <Text
+                      className="font-bold text-white"
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.communityStatsText : { fontSize: 18 }}
+                    >
                       {videos.length || 0}
                     </Text>
                     <Text
-                      className={`text-md ${activeTab === "videos" ? "text-white" : "text-gray-400"}`}
+                      className={`${activeTab === "videos" ? "text-white" : "text-gray-400"} text-md`}
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.communityStatsLabel : {}}
                     >
                       Videos
                     </Text>
@@ -453,7 +487,10 @@ export default function PersonalCommunityPage() {
                 </View>
 
                 {/* Buttons */}
-                <View className="flex-row w-full items-center justify-center gap-3 mt-5 md:mt-0">
+                <View
+                  className={`flex-row w-full items-center justify-center mt-5 md:mt-0 ${deviceInfo.isTabletDevice ? '' : 'gap-3'}`}
+                  style={deviceInfo.isTabletDevice ? responsiveStyles.buttonRowSpacing : {}}
+                >
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
@@ -461,9 +498,13 @@ export default function PersonalCommunityPage() {
                         params: { communityId: communityData._id },
                       })
                     }
-                    className="flex-1 px-4 py-2 rounded-xl bg-transparent border border-gray-400"
+                    className={`flex-1 rounded-xl bg-transparent border border-gray-400 ${deviceInfo.isTabletDevice ? '' : 'px-4 py-2'}`}
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
-                    <Text className="text-white text-center">
+                    <Text
+                      className="text-white text-center"
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : {}}
+                    >
                       Edit Community
                     </Text>
                   </TouchableOpacity>
@@ -475,9 +516,13 @@ export default function PersonalCommunityPage() {
                         params: { communityId: communityData._id },
                       })
                     }
-                    className="flex-1 px-4 py-2 rounded-xl bg-transparent border border-gray-400"
+                    className={`flex-1 rounded-xl bg-transparent border border-gray-400 ${deviceInfo.isTabletDevice ? '' : 'px-4 py-2'}`}
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.buttonPadding : {}}
                   >
-                    <Text className="text-white text-center">
+                    <Text
+                      className="text-white text-center"
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.buttonTextSize : {}}
+                    >
                       View Analytics
                     </Text>
                   </TouchableOpacity>
@@ -517,9 +562,20 @@ export default function PersonalCommunityPage() {
 
                 {/* Search Bar - Only show for followers and creators */}
                 {(activeTab === "followers" || activeTab === "creators") && (
-                  <View className="mt-4 px-4">
-                    <View className="bg-gray-800 rounded-lg px-4 py-3 flex-row items-center">
-                      <Text className="text-gray-400 flex-1">Search...</Text>
+                  <View
+                    className={deviceInfo.isTabletDevice ? "mt-4" : "mt-4 px-4"}
+                    style={deviceInfo.isTabletDevice ? responsiveStyles.containerPadding : {}}
+                  >
+                    <View
+                      className={`bg-gray-800 rounded-lg flex-row items-center ${deviceInfo.isTabletDevice ? '' : 'px-4 py-3'}`}
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.searchInput : {}}
+                    >
+                      <Text
+                        className="text-gray-400 flex-1"
+                        style={{ fontSize: deviceInfo.isTabletDevice ? 18 : 16 }}
+                      >
+                        Search...
+                      </Text>
                     </View>
                   </View>
                 )}
@@ -566,8 +622,8 @@ export default function PersonalCommunityPage() {
             }
             ListEmptyComponent={
               (activeTab === "videos" && isLoadingVideos) ||
-              (activeTab === "followers" && isLoadingFollowers) ||
-              (activeTab === "creators" && isLoadingCreators) ? (
+                (activeTab === "followers" && isLoadingFollowers) ||
+                (activeTab === "creators" && isLoadingCreators) ? (
                 <View className="flex-1 h-64 items-center justify-center">
                   <ActivityIndicator size="large" color="white" />
                 </View>

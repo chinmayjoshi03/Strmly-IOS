@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   LinkIcon,
   HeartIcon,
   IndianRupee,
-  PaperclipIcon,
+  MoreVertical,
 } from "lucide-react-native";
 import { useAuthStore } from "@/store/useAuthStore";
 import ThemedView from "@/components/ThemedView"; // Assuming this is a basic wrapper for styling
@@ -26,17 +26,19 @@ import { router, useFocusEffect } from "expo-router";
 import { getProfilePhotoUrl } from "@/utils/profileUtils";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useVideosStore } from "@/store/useVideosStore";
+import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 import { set } from "lodash";
 
 const { height } = Dimensions.get("window");
 
 export default function PublicProfilePageWithId() {
-  const [activeTab, setActiveTab] = useState("long");
+  const [activeTab, setActiveTab] = useState("videos");
   const [userData, setUserData] = useState<any>(null);
   const [userError, setUserError] = useState<string | null>(null);
   const [communities, setCommunities] = useState<any[]>([]);
 
   const [videos, setVideos] = useState<any[]>([]);
+  const [series, setSeries] = useState<any[]>([]);
 
   const [hasCreatorPass, setHasCreatorPass] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -47,14 +49,27 @@ export default function PublicProfilePageWithId() {
 
   const [page, setPage] = useState(1);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [isLoadingSeries, setIsLoadingSeries] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  // Ref to track if component has mounted to prevent unnecessary effects
+  const hasMounted = useRef(false);
   const { token } = useAuthStore();
   const { setVideosInZustand, appendVideos } = useVideosStore();
+
+  // Get device info and responsive styles
+  const deviceInfo = getDeviceInfo();
+  const responsiveStyles = getResponsiveStyles();
 
   const BACKEND_API_URL = Constants.expoConfig?.extra?.BACKEND_API_URL;
 
   const route = useRoute();
   const { id } = route.params as { id: string };
+
+  // Set hasMounted to true on first render
+  useEffect(() => {
+    hasMounted.current = true;
+  }, []);
 
   const fetchUserVideos = useCallback(
     async (pageToFetch: number) => {
@@ -99,17 +114,140 @@ export default function PublicProfilePageWithId() {
     [token, id, activeTab, isLoadingVideos, hasMore]
   );
 
-  // Reset videos when tab changes
-  useFocusEffect(
-    useCallback(() => {
-      if (!id || activeTab === "repost" || activeTab === "liked") return;
+  const fetchUserSeries = useCallback(
+    async () => {
+      if (!token || !id || isLoadingSeries) return;
 
-      setVideos(() => []);
+      setIsLoadingSeries(true);
+
+      try {
+        console.log('🔍 fetchUserSeries Debug Info (Public Profile):');
+        console.log('  - User ID:', id);
+
+        const url = `${BACKEND_API_URL}/series/user?t=${Date.now()}`;
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            try {
+              const errorData = await response.json();
+              if (errorData.error === "No series found for this user") {
+                console.log('✅ No series found - treating as empty result');
+                setSeries([]);
+                return;
+              }
+              // If we reach here, throw the error with the already parsed data
+              throw new Error(errorData.error || errorData.message || "Failed to fetch user series");
+            } catch (parseError) {
+              console.log('❌ Could not parse 404 error response as JSON');
+              // For 404, assume no series found
+              setSeries([]);
+              return;
+            }
+          }
+          
+          // For non-404 errors, try to parse the response
+          try {
+            const errorData = await response.json();
+            throw new Error(errorData.error || errorData.message || "Failed to fetch user series");
+          } catch (parseError) {
+            throw new Error(`Failed to fetch user series: ${response.status} ${response.statusText}`);
+          }
+        }
+
+        const data = await response.json();
+
+        if (!data.data || !Array.isArray(data.data)) {
+          setSeries([]);
+          return;
+        }
+
+        // Transform series data - only show first episode of each series in grid
+        const firstEpisodes: any[] = [];
+        
+        data.data.forEach((seriesItem: any) => {
+          if (seriesItem.episodes && seriesItem.episodes.length > 0) {
+            const firstEpisode = seriesItem.episodes[0];
+            
+            firstEpisodes.push({
+              ...firstEpisode,
+              seriesId: seriesItem._id,
+              seriesTitle: seriesItem.title,
+              seriesGenre: seriesItem.genre,
+              seriesType: seriesItem.type,
+              episodeIndex: 0,
+              totalEpisodesInSeries: seriesItem.episodes.length,
+              allSeriesEpisodes: seriesItem.episodes,
+              videoUrl: firstEpisode.videoUrl || firstEpisode.video_url,
+              access: {
+                isPurchased: seriesItem.access?.isPurchased || true,
+                isPlayable: seriesItem.access?.isPlayable || true,
+                accessType: seriesItem.access?.accessType || "free",
+                freeRange: seriesItem.access?.freeRange || null,
+                price: seriesItem.price || 0,
+              },
+              hasCreatorPassOfVideoOwner: seriesItem.hasCreatorPassOfVideoOwner || false,
+              likes: firstEpisode.likes || 0,
+              shares: firstEpisode.shares || 0,
+              views: firstEpisode.views || 0,
+              gifts: firstEpisode.gifts || 0,
+              duration: firstEpisode.duration || firstEpisode.video_duration || 120,
+              name: firstEpisode.name || `Episode 1`,
+              amount: firstEpisode.amount || seriesItem.price || 0,
+              created_by: firstEpisode.created_by || seriesItem.created_by || {
+                _id: "unknown",
+                username: "Unknown",
+                profile_photo: "",
+              },
+              series: {
+                _id: seriesItem._id,
+                title: seriesItem.title,
+                price: seriesItem.price || 0,
+              },
+            });
+          }
+        });
+
+        setSeries(firstEpisodes);
+      } catch (err) {
+        console.error("Error fetching user series:", err);
+        if (err instanceof Error && !err.message.includes("No series found")) {
+          Alert.alert("Error", err.message || "An unknown error occurred while fetching series.");
+        }
+      } finally {
+        setIsLoadingSeries(false);
+      }
+    },
+    [token, id, isLoadingSeries]
+  );
+
+  // Handle tab changes separately to avoid re-fetching profile data
+  useEffect(() => {
+    if (!token || !id || !hasMounted.current) return;
+    
+    console.log('🔄 Tab changed to:', activeTab);
+    
+    if (activeTab === "videos") {
+      console.log('📹 Fetching videos...');
+      setVideos([]);
       setPage(1);
       setHasMore(true);
-      fetchUserVideos(1); // fetch first page
-    }, [id, token, activeTab])
-  );
+      setIsLoadingVideos(false);
+      setTimeout(() => {
+        fetchUserVideos(1);
+      }, 100);
+    } else if (activeTab === "series") {
+      console.log('📺 Fetching series...');
+      fetchUserSeries();
+    }
+  }, [activeTab]);
 
   useFocusEffect(
     useCallback(() => {
@@ -355,17 +493,20 @@ export default function PublicProfilePageWithId() {
     <TouchableOpacity
       className="relative aspect-[9/16] flex-1 rounded-sm overflow-hidden"
       onPress={() => {
+        const { setVideoType } = useVideosStore.getState();
+        setVideoType('videos');
         setVideosInZustand(videos);
-        console.log('index:', index)
         router.push({
           pathname: "/(dashboard)/long/GlobalVideoPlayer",
-          params: { startIndex: index },
+          params: { startIndex: index.toString() },
         });
       }}
     >
       {item.thumbnailUrl !== "" ? (
         <Image
-          source={{ uri: item.thumbnailUrl }}
+          source={{
+            uri: `${item.thumbnailUrl}`,
+          }}
           alt="video thumbnail"
           className="w-full h-full object-cover"
         />
@@ -377,19 +518,98 @@ export default function PublicProfilePageWithId() {
     </TouchableOpacity>
   );
 
+  const renderSeriesItem = ({ item, index }: { item: any; index: number }) => (
+    <TouchableOpacity
+      className="relative aspect-[9/16] flex-1 rounded-sm overflow-hidden"
+      onPress={() => {
+        // Set all episodes from this series for the video player
+        const { setVideoType } = useVideosStore.getState();
+        setVideoType('series');
+        
+        // Transform all episodes from this series for video player
+        const allEpisodesFromSeries = item.allSeriesEpisodes.map((episode: any, episodeIndex: number) => ({
+          ...episode,
+          seriesId: item.seriesId,
+          seriesTitle: item.seriesTitle,
+          seriesGenre: item.seriesGenre,
+          seriesType: item.seriesType,
+          episodeIndex: episodeIndex,
+          totalEpisodesInSeries: item.totalEpisodesInSeries,
+          videoUrl: episode.videoUrl || episode.video_url,
+          access: item.access,
+          hasCreatorPassOfVideoOwner: item.hasCreatorPassOfVideoOwner,
+          likes: episode.likes || 0,
+          shares: episode.shares || 0,
+          views: episode.views || 0,
+          gifts: episode.gifts || 0,
+          duration: episode.duration || episode.video_duration || 120,
+          name: episode.name || `Episode ${episodeIndex + 1}`,
+          amount: episode.amount || item.amount,
+          created_by: episode.created_by || item.created_by,
+          series: item.series,
+        }));
+        
+        setVideosInZustand(allEpisodesFromSeries);
+        router.push({
+          pathname: "/(dashboard)/long/GlobalVideoPlayer",
+          params: { 
+            startIndex: "0",
+            videoType: 'series'
+          },
+        });
+        console.log("Playing series:", item.seriesTitle, "starting from episode 1 of", item.totalEpisodesInSeries, "episodes");
+      }}
+    >
+      {item.thumbnailUrl !== "" ? (
+        <Image
+          source={{
+            uri: `${item.thumbnailUrl}`,
+          }}
+          alt="episode thumbnail"
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <View className="w-full h-full flex items-center justify-center bg-gray-800">
+          <Image
+            source={require("../../../../assets/episode.png")}
+            style={{ width: 32, height: 32 }}
+            resizeMode="contain"
+          />
+        </View>
+      )}
+
+      {/* Episode indicator overlay */}
+      <View className="absolute bottom-2 left-2 bg-black bg-opacity-70 rounded px-2 py-1">
+        <Text className="text-white text-xs font-medium">
+          E1 {item.totalEpisodesInSeries > 1 && `of ${item.totalEpisodesInSeries}`}
+        </Text>
+      </View>
+
+      {/* Series title overlay */}
+      <View className="absolute top-2 left-2 bg-black bg-opacity-70 rounded px-2 py-1">
+        <Text className="text-white text-xs" numberOfLines={1}>
+          {item.seriesTitle}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "black" }} edges={[]}>
       <ThemedView style={{ flex: 1 }}>
         <FlatList
-          data={videos}
+          key={activeTab} // Force re-render when switching tabs
+          data={activeTab === "videos" ? videos : series}
           keyExtractor={(item) => item._id}
-          renderItem={renderGridItem}
-          numColumns={3}
+          renderItem={activeTab === "videos" ? renderGridItem : renderSeriesItem}
+          numColumns={3} // Both videos and series use 3-column grid
           contentContainerStyle={{
             paddingBottom: 30,
             paddingHorizontal: 0,
           }}
-          onEndReached={() => fetchUserVideos(page + 1)}
+          onEndReached={activeTab === "videos" ? () => fetchUserVideos(page + 1) : undefined}
           onEndReachedThreshold={0.8}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
@@ -418,10 +638,16 @@ export default function PublicProfilePageWithId() {
                       <ActivityIndicator size="large" color="#F1C40F" />
                     </View>
                   ) : (
-                    <View className="max-w-4xl -mt-32 relative mx-6">
+                    <View 
+                      className={`max-w-4xl -mt-32 relative ${deviceInfo.isTabletDevice ? '' : 'mx-6'}`}
+                      style={deviceInfo.isTabletDevice ? responsiveStyles.profileContainer : {}}
+                    >
                       <View className="flex flex-col items-center md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
-                        <View className="items-center">
-                          <View className="size-24 border-white border rounded-full overflow-hidden">
+                        <View className="items-center" style={deviceInfo.isTabletDevice ? responsiveStyles.profilePictureContainer : {}}>
+                          <View 
+                            className={`border-white border rounded-full overflow-hidden ${deviceInfo.isTabletDevice ? '' : 'size-24'}`}
+                            style={deviceInfo.isTabletDevice ? responsiveStyles.profilePictureSize : {}}
+                          >
                             <Image
                               source={{
                                 uri: getProfilePhotoUrl(
@@ -449,7 +675,8 @@ export default function PublicProfilePageWithId() {
 
                       {/* Stats */}
                       <View
-                        className={`mt-6 flex-row items-center ${userData?.userDetails?.creator_profile?.creator_pass_price !== 0 && !hasCreatorPass ? "justify-evenly gap-4" : "justify-center gap-5"}`}
+                        className={`mt-6 flex-row items-center ${userData?.userDetails?.creator_profile?.creator_pass_price !== 0 && !hasCreatorPass ? "justify-evenly" : "justify-center"} ${deviceInfo.isTabletDevice ? '' : userData?.userDetails?.creator_profile?.creator_pass_price !== 0 && !hasCreatorPass ? 'gap-4' : 'gap-5'}`}
+                        style={deviceInfo.isTabletDevice ? responsiveStyles.statsContainer : {}}
                       >
                         <TouchableOpacity
                           className="text-center items-center"
@@ -665,53 +892,87 @@ export default function PublicProfilePageWithId() {
                   )}
 
                   {/* Tabs */}
-                  <View className="mt-6">
-                    {/* <View className="flex-1 flex-row justify-around items-center">
+                  <View className="mt-2 border-b border-gray-700">
+                    <View className="flex-1 flex-row justify-around items-center">
                       <TouchableOpacity
                         className={`pb-4 flex-1 items-center justify-center`}
-                        onPress={() => setActiveTab("long")}
-                      >
-                        <PaperclipIcon
-                          color={activeTab === "long" ? "white" : "gray"}
-                        />
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        className={`pb-4 flex-1 items-center justify-center`}
-                        onPress={() => {
-                          setActiveTab(() => "repost");
-                          fetchUserReshareVideos();
-                        }}
+                        onPress={() => setActiveTab("videos")}
                       >
                         <Image
-                          source={require("../../../../assets/images/repost.png")}
-                          className="w-6 h-6"
-                          tintColor={activeTab === "repost" ? "white" : "gray"} // Apply tintColor for coloring images
+                          source={require("../../../../assets/images/logo.png")}
+                          style={{ 
+                            width: 24, 
+                            height: 24,
+                            opacity: activeTab === "videos" ? 1 : 0.5
+                          }}
+                          resizeMode="contain"
                         />
+                        <Text className={`text-sm mt-1 ${activeTab === "videos" ? "text-white" : "text-gray-400"}`}>
+                          Videos
+                        </Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         className={`pb-4 flex-1 items-center justify-center`}
-                        onPress={() => {
-                          setActiveTab("liked");
-                          fetchUserLikedVideos();
-                        }}
+                        onPress={() => setActiveTab("series")}
                       >
-                        <HeartIcon
-                          color={activeTab === "liked" ? "white" : "gray"}
-                          fill={activeTab === "liked" ? "white" : ""}
+                        <Image
+                          source={require("../../../../assets/episode.png")}
+                          style={{ 
+                            width: 24, 
+                            height: 24,
+                            opacity: activeTab === "series" ? 1 : 0.5
+                          }}
+                          resizeMode="contain"
                         />
-                      </TouchableOpacity>
-                    </View> */}
-
-                    {videos.length === 0 && !isLoadingVideos && (
-                      <View className="items-center h-20 justify-center">
-                        <Text className="text-white text-xl text-center">
-                          No videos found
+                        <Text className={`text-sm mt-1 ${activeTab === "series" ? "text-white" : "text-gray-400"}`}>
+                          Series
                         </Text>
-                      </View>
-                    )}
+                      </TouchableOpacity>
+                    </View>
                   </View>
+
+                  {/* Loading and Empty States */}
+                  {(isLoadingVideos || isLoadingSeries) && (
+                    <View className="w-full h-96 flex-1 items-center justify-center mt-20">
+                      <ActivityIndicator size="large" color="#fff" />
+                      <Text className="text-gray-400 mt-2">
+                        Loading {activeTab}...
+                      </Text>
+                    </View>
+                  )}
+
+                  {activeTab === "videos" && videos.length === 0 && !isLoadingVideos && (
+                    <View className="items-center justify-center px-4 py-20">
+                      <Image
+                        source={require("../../../../assets/images/logo.png")}
+                        style={{ width: 48, height: 48, opacity: 0.5 }}
+                        resizeMode="contain"
+                      />
+                      <Text className="text-white text-xl text-center mt-2">
+                        No videos found
+                      </Text>
+                      <Text className="text-gray-400 text-center mt-1">
+                        This user hasn't uploaded any videos yet
+                      </Text>
+                    </View>
+                  )}
+
+                  {activeTab === "series" && series.length === 0 && !isLoadingSeries && (
+                    <View className="items-center justify-center px-4 py-20">
+                      <Image
+                        source={require("../../../../assets/episode.png")}
+                        style={{ width: 48, height: 48 }}
+                        resizeMode="contain"
+                      />
+                      <Text className="text-white text-xl text-center mt-2">
+                        No episodes found
+                      </Text>
+                      <Text className="text-gray-400 text-center mt-1">
+                        This user hasn't created any series yet
+                      </Text>
+                    </View>
+                  )}
                 </View>
               )}
             </>

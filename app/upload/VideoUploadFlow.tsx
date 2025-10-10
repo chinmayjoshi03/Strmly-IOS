@@ -7,8 +7,9 @@ import VideoDetailScreen from './screens/VideoDetailScreen';
 import FinalStageScreen from './screens/FinalStageScreen';
 import UploadProgressScreen from './screens/UploadProgressScreen';
 import EpisodeSelectionScreen from './screens/EpisodeSelectionScreen';
+import ThumbnailSelectScreen from './screens/ThumbnailSelectScreen';
 import { SeriesSelectionScreen } from '../studio/screens';
-import SimpleSeriesCreationScreen from '../studio/screens/SimpleSeriesCreationScreen';
+import SeriesCreationFlow from '../studio/screens/SeriesCreationFlow';
 import { Series } from '../studio/types';
 
 interface VideoUploadFlowProps {
@@ -46,6 +47,7 @@ const VideoUploadFlow: React.FC<VideoUploadFlowProps> = ({
     updateVideoDetails,
     updateFinalStageData,
     setSelectedFile,
+    setSelectedThumbnail,
     setVideoFormat,
     setSelectedSeries,
     validateCurrentStep,
@@ -134,8 +136,9 @@ const VideoUploadFlow: React.FC<VideoUploadFlowProps> = ({
   };
 
   // Handle continue upload from file selection screen
-  const handleContinueUpload = async () => {
-    await submitUpload();
+  const handleContinueUpload = () => {
+    // Navigate to thumbnail selection instead of directly uploading
+    goToNextStep();
   };
 
   // Handle format selection
@@ -187,7 +190,15 @@ const VideoUploadFlow: React.FC<VideoUploadFlowProps> = ({
     goToDetailsStep();
   };
 
+  // Handle thumbnail selection
+  const handleThumbnailSelected = (thumbnail: any | null) => {
+    setSelectedThumbnail(thumbnail);
+  };
 
+  // Handle continue from thumbnail selection
+  const handleContinueFromThumbnail = async () => {
+    await submitUpload();
+  };
 
   // Handle final upload submission - navigate to file selection
   const handleFinalUpload = () => {
@@ -239,7 +250,7 @@ const VideoUploadFlow: React.FC<VideoUploadFlowProps> = ({
 
       case 'series-creation':
         return (
-          <SimpleSeriesCreationScreen
+          <SeriesCreationFlow
             onBack={handleBack}
             onSeriesCreated={handleSeriesCreated}
           />
@@ -298,6 +309,16 @@ const VideoUploadFlow: React.FC<VideoUploadFlowProps> = ({
             selectedSeries={state.selectedSeries}
             videoFormat={state.videoFormat}
             isEditingDraft={state.isEditingDraft}
+          />
+        );
+
+      case 'thumbnail-select':
+        return (
+          <ThumbnailSelectScreen
+            onThumbnailSelected={handleThumbnailSelected}
+            onBack={handleBack}
+            onContinue={handleContinueFromThumbnail}
+            selectedVideo={state.selectedFile}
           />
         );
 

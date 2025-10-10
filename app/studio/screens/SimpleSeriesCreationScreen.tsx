@@ -9,20 +9,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { createSeries } from '../../../api/series/seriesActions';  // Add this import
+import { createSeries } from '../../../api/series/seriesActions';
 import { Series } from '../types';
-
-
-// ...existing code...
 
 interface SimpleSeriesCreationScreenProps {
   onBack: () => void;
   onSeriesCreated: (series: Series) => void;
+  onThumbnailSelect: (seriesData: any) => void;
 }
 
 const SimpleSeriesCreationScreen: React.FC<SimpleSeriesCreationScreenProps> = ({
   onBack,
-  onSeriesCreated
+  onSeriesCreated,
+  onThumbnailSelect
 }) => {
   console.log('🎬 SimpleSeriesCreationScreen component rendered');
   
@@ -61,55 +60,26 @@ const SimpleSeriesCreationScreen: React.FC<SimpleSeriesCreationScreenProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     if (!validateForm()) {
       return;
     }
 
-    setLoading(true);
+    // Prepare series data for thumbnail selection
+    const seriesData = {
+      title: title.trim(),
+      description: `${title.trim()} series`, // Basic description
+      genre: 'Action', // Default genre - you can add genre selection later
+      language: 'english',
+      type: type === 'free' ? 'Free' : 'Paid' as 'Free' | 'Paid',
+      price: type === 'paid' ? price : 0,
+      promisedEpisodesCount: 2, // Minimum required episodes
+    };
 
-    try {
-      const { createSeries } = await import('../../../api/series/seriesActions');
-      
-      const seriesData = {
-        title: title.trim(),
-        description: `${title.trim()} series`, // Basic description
-        genre: 'Action', // Default genre - you can add genre selection later
-        language: 'english',
-        type: type === 'free' ? 'Free' : 'Paid' as 'Free' | 'Paid',
-        price: type === 'paid' ? price : 0,
-        promisedEpisodesCount: 2, // Minimum required episodes
-      };
-
-      console.log('Creating series with data:', seriesData);
-
-      const result = await createSeries(seriesData);
-      console.log('API Response:', result);
-
-      // Convert backend response to frontend Series format
-      const newSeries: Series = {
-        id: result.data._id,
-        title: result.data.title,
-        description: result.data.description,
-        totalEpisodes: result.data.total_episodes || 0,
-        accessType: result.data.type.toLowerCase() as 'free' | 'paid',
-        price: result.data.price,
-        launchDate: result.data.release_date || result.data.createdAt,
-        totalViews: 0, // Not available in current API response
-        totalEarnings: 0, // Not available in current API response
-        episodes: [],
-        createdAt: result.data.createdAt,
-        updatedAt: result.data.updatedAt
-      };
-
-      console.log('Series created successfully:', newSeries);
-      setLoading(false);
-      onSeriesCreated(newSeries);
-    } catch (error) {
-      console.error('Error creating series:', error);
-      setLoading(false);
-      setErrors({ general: error instanceof Error ? error.message : 'Failed to create series' });
-    }
+    console.log('Proceeding to thumbnail selection with series data:', seriesData);
+    
+    // Navigate to thumbnail selection instead of creating immediately
+    onThumbnailSelect(seriesData);
   };
 
   const handleTypeSelect = (selectedType: 'free' | 'paid') => {

@@ -13,6 +13,7 @@ export interface Series {
   episodes: Episode[];
   createdAt: string;
   updatedAt: string;
+  posterUrl?: string; // URL for series poster/thumbnail
 }
 
 export interface Episode {

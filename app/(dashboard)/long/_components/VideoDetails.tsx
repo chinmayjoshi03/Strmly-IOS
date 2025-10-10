@@ -255,6 +255,9 @@ const VideoDetails = ({
   );
 
   const transformEpisodes = (episodes: any[]): any[] => {
+    if (!Array.isArray(episodes)) {
+      return [];
+    }
     return episodes.map((ep) => ({
       _id: ep._id,
       name: ep.name,
@@ -266,7 +269,7 @@ const VideoDetails = ({
       audio_fingerprint: ep.audio_fingerprint,
       duration: ep.duration,
       duration_formatted: ep.duration_formatted,
-      comments: ep.comments.map((c: any) => c._id ?? c), // normalize comment IDs
+      comments: Array.isArray(ep.comments) ? ep.comments.map((c: any) => c._id ?? c) : [], // normalize comment IDs
       videoUrl: ep.videoUrl,
       videoResolutions: ep.videoResolutions,
       thumbnailUrl: ep.thumbnailUrl,
@@ -445,7 +448,7 @@ const VideoDetails = ({
       <View className="flex-row items-center justify-between relative">
         <View className="flex-row items-center gap-1">
           <Text className="text-white uppercase">{name}</Text>
-          {series !== null && videoType != "series" && (
+          {series !== null && (
             <TouchableOpacity
               className="border border-white rounded-xl px-2 py-0.5"
               disabled={isLoadingSeriesVideos}
@@ -459,7 +462,7 @@ const VideoDetails = ({
             >
               <View className="flex-row items-center">
                 <Text className="font-semibold text-xs text-white mr-1">
-                  Ep: 0{selectedEpisodeIndex}
+                  EP {selectedEpisodeIndex || 1}
                 </Text>
                 <ChevronDownIcon color={"white"} size={12} />
               </View>
@@ -679,9 +682,9 @@ const VideoDetails = ({
         )}
 
         {/* Episode Dropdown */}
-        {showDropdown && (
+        {showDropdown && series?.episodes && (
           <View className="absolute bottom-3.5 left-11 rounded-xl p-2 w-56">
-            {series?.episodes.map((ep, idx) => (
+            {series.episodes.map((ep, idx) => (
               <TouchableOpacity
                 key={ep._id || idx}
                 className="mb-[0.5px]"
