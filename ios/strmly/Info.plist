@@ -39,7 +39,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>5</string>
+    <string>6</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
@@ -60,14 +60,14 @@
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your photos</string>
+    <string>Strmly needs access to your photo library to let you upload videos, select custom thumbnails for your content,update your profile photo, and upload community pictures and attach photos as proof when reporting issues. For example, you can upload videos from your gallery, choose thumbnail images for your posts, and attach screenshots when reporting inappropriate content.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
     <key>UIBackgroundModes</key>
     <array>
-   
+     
     </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>

@@ -13,11 +13,12 @@ export default {
     newArchEnabled: true,
     ios: {
       bundleIdentifier: "com.anonymous.strmly",
-      buildNumber: "5",
+      buildNumber: "6",
       supportsTablet: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
-        UIBackgroundModes: []
+        UIBackgroundModes: [],
+        NSPhotoLibraryUsageDescription: "Strmly needs access to your photo library to let you upload videos, select custom thumbnails for your content, and attach photos as proof when reporting issues. For example, you can upload videos from your gallery, choose thumbnail images for your posts, and attach screenshots when reporting inappropriate content."
       }
     },
     android: {
