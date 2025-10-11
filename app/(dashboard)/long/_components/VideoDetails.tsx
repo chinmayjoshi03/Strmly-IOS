@@ -5,14 +5,12 @@ import {
   Image,
   Pressable,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ArrowUpRightFromSquare,
   ChevronDownIcon,
   Hash,
-  SquareCheck,
 } from "lucide-react-native";
 import { useAuthStore } from "@/store/useAuthStore";
 import Constants from "expo-constants";
@@ -30,7 +28,6 @@ type VideoDetailsProps = {
   videoId: string;
   name: string;
   type: string;
-  is_monetized?: boolean;
   videoAmount: number;
 
   createdBy: {
@@ -74,10 +71,6 @@ type VideoDetailsProps = {
   episode_number: number | null;
   onToggleFullScreen?: () => void;
   isFullScreen?: boolean;
-  onEpisodeChange?: (episodeData: any) => void; // New callback for episode switching
-
-  setShowBuyOption: React.Dispatch<React.SetStateAction<boolean>>;
-  showBuyOption: boolean;
 };
 
 const VideoDetails = ({
@@ -87,7 +80,6 @@ const VideoDetails = ({
   setWantToBuyVideo,
   videoId,
   type,
-  is_monetized,
   name,
   videoAmount,
   series,
@@ -105,6 +97,7 @@ const VideoDetails = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState(0);
   const [showPriceDropdown, setShowPriceDropdown] = useState(false);
+  const [showBuyOption, setShowBuyOption] = useState(false);
   const [isFollowCreator, setIsFollowCreator] = useState<boolean>(false);
   const [hasCreatorPass, setHasCreatorPass] = useState<boolean>(false);
   const [hasAccessPass, setHasAccessPass] = useState<string | null>(null);
@@ -122,7 +115,7 @@ const VideoDetails = ({
   const { token, user } = useAuthStore();
   const { initiateGifting } = useGiftingStore();
 
-  const { setVideosInZustand, videoType, setVideoType } = useVideosStore();
+  const { setVideosInZustand, videoType } = useVideosStore();
   const [seriesVideos, setSeriesVideos] = useState<any>(null);
   const [pendingNavigation, setPendingNavigation] = useState<{episodeIndex: number} | null>(null);
 
@@ -210,108 +203,9 @@ const VideoDetails = ({
     }, [])
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const checkIfFollowCommunity = async () => {
-        if (!token || !community?._id) {
-          return;
-        }
 
-        try {
-          const response = await fetch(
-            `${BACKEND_API_URL}/community/${community?._id}/following-status`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          if (!response.ok)
-            throw new Error("Failed while checking community follow status");
-          const data = await response.json();
-          // console.log("check follow community", data);
-          setIsFollowCommunity(data.status);
-        } catch (err) {
-          console.log("Error in community check status", err);
-        }
-      };
 
-      if (token && community?._id) {
-        checkIfFollowCommunity();
-      }
-    }, [token, community?._id])
-  );
 
-  const followCreator = async () => {
-    setIsFollowCreatorLoading(true);
-    try {
-      const response = await fetch(
-        `${BACKEND_API_URL}/user/${!isFollowCreator ? "follow" : "unfollow"}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(
-            !isFollowCreator
-              ? {
-                  followUserId: createdBy?._id,
-                }
-              : { unfollowUserId: createdBy?._id }
-          ),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to follow user profile");
-      }
-
-      setIsFollowCreator(data.isFollowing);
-    } catch (error) {
-      console.log("error", error);
-      Alert.alert(
-        "Error",
-        error instanceof Error
-          ? error.message
-          : "An unknown error occurred while following user."
-      );
-    } finally {
-      setIsFollowCreatorLoading(false);
-    }
-  };
-
-  const followCommunity = async () => {
-    if (!token || !community?._id) {
-      return;
-    }
-    setIsFollowCommunityLoading(true);
-    try {
-      const response = await fetch(
-        `${BACKEND_API_URL}/${isFollowCommunity ? "caution/community/unfollow" : "community/follow"}`,
-        {
-          method: isFollowCommunity ? "PATCH" : "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ communityId: community._id }),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to follow community");
-      const data = await response.json();
-      setIsFollowCommunity(!isFollowCommunity);
-      console.log("data", data);
-    } catch (err) {
-      console.log("err", err);
-    } finally {
-      setIsFollowCommunityLoading(false);
-    }
-  };
 
   useFocusEffect(
     useCallback(() => {
@@ -471,8 +365,7 @@ const VideoDetails = ({
                 </Text>
               </View>
             </Pressable>
-
-            <Pressable onPress={() => followCommunity()}>
+            {/* <Pressable onPress={() => followCommunity()}>
               {isFollowCommunityLoading ? (
                 <ActivityIndicator className="size-5" color="white" />
               ) : isFollowCommunity ? (
@@ -483,7 +376,7 @@ const VideoDetails = ({
                   className="size-5"
                 />
               )}
-            </Pressable>
+            </Pressable> */}
           </>
         )}
       </View>
@@ -581,11 +474,7 @@ const VideoDetails = ({
         <Pressable onPress={onToggleFullScreen}>
           <Image
             source={require("../../../../assets/images/fullscreen.png")}
-            style={{
-              width: 20,
-              height: 20,
-              transform: [{ scale: isFullScreen ? 1.1 : 1 }],
-            }}
+            className={`size-5 ${isFullScreen ? "scale-110" : "scale-100"} ease-in`}
           />
         </Pressable>
 
@@ -601,7 +490,6 @@ const VideoDetails = ({
                 className="mb-0.5"
                 onPress={() => {
                   setShowPriceDropdown(false);
-                  setShowBuyOption(false);
                   setShowDropdown(false);
                 }}
               >

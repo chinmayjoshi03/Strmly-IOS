@@ -272,6 +272,13 @@ const Setting = () => {
           </Pressable> */}
 
           <Pressable
+            onPress={() => router.push("/(dashboard)/wallet")}
+            className="w-full"
+          >
+            <Text className="text-white text-lg">Wallet</Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => openModal(modalTypes.support)}
             className="w-full"
           >

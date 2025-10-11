@@ -434,6 +434,22 @@ const reportVideo = async () => {
           </Pressable>
           <Text className="text-white text-xs">Report</Text>
         </View>
+
+        {/* NEW: Report Button */}
+        <View className="items-center gap-1">
+          <Pressable 
+            onPress={reportVideo}
+            disabled={isReporting}
+            style={{ opacity: isReporting ? 0.5 : 1 }}
+          >
+            <FontAwesome
+              name="flag"
+              size={24}
+              color="white"
+            />
+          </Pressable>
+          <Text className="text-white text-xs">Report</Text>
+        </View>
       </View>
     </View>
   );
