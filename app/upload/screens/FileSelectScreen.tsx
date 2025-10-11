@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { useVideoPlayer, VideoView } from "expo-video";
 
 interface FileSelectScreenProps {
@@ -61,13 +61,33 @@ const FileSelectScreen: React.FC<FileSelectScreenProps> = ({
   // Handle file selection
   const handleFileSelect = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "video/*",
-        copyToCacheDirectory: true,
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          "Permission Required",
+          "Sorry, we need camera roll permissions to select videos from your gallery."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: false,
+        quality: 1,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const file = result.assets[0];
+        const asset = result.assets[0];
+
+        // Create file object similar to DocumentPicker format
+        const file = {
+          uri: asset.uri,
+          name: asset.fileName || `video_${Date.now()}.mp4`,
+          size: asset.fileSize,
+          mimeType: asset.type || 'video/mp4',
+          type: asset.type || 'video/mp4',
+        };
 
         console.log("✅ FileSelectScreen: Selected file:", {
           name: file.name,
@@ -261,7 +281,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
-   
+
   },
   headerTitle: {
     color: "white",

@@ -465,14 +465,14 @@ const VideoControls = ({
                             // The basic episode info from series.episodes doesn't have video URL
                             console.log("Warning: Using fallback - episode may not have video URL");
                             console.log("Basic episode info:", ep);
-                            
+
                             // Try to fetch the full episode data
                             if (token && ep._id) {
                               console.log("Attempting to fetch full episode data for:", ep._id);
                               // This would require an API call to get the full episode data
                               // For now, use the fallback but it might not work without videoUrl
                             }
-                            
+
                             const episodeData = {
                               ...videoData,
                               _id: ep._id,

@@ -404,7 +404,7 @@ const VideosFeed: React.FC = () => {
         snapToInterval={VIDEO_HEIGHT}
         snapToAlignment="start"
         decelerationRate="fast"
-        bounces={false}
+        bounces={!showCommentsModal}
         scrollEventThrottle={16}
         disableIntervalMomentum={true}
         onScrollEndDrag={onScrollEndDrag}
@@ -414,16 +414,18 @@ const VideosFeed: React.FC = () => {
         overScrollMode="never"
         alwaysBounceVertical={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="white"
-            colors={["white"]}
-            progressBackgroundColor="#1a1a1a"
-            titleColor="white"
-            title="Pull to refresh"
-            progressViewOffset={0}
-          />
+          !showCommentsModal ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="white"
+              colors={["white"]}
+              progressBackgroundColor="#1a1a1a"
+              titleColor="white"
+              title="Pull to refresh"
+              progressViewOffset={0}
+            />
+          ) : undefined
         }
         ListFooterComponent={
           isFetchingMore ? (

@@ -28,6 +28,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useVideosStore } from "@/store/useVideosStore";
 import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
 import { set } from "lodash";
+import VideoGridSkeleton from "@/components/VideoGridSkeleton";
 
 const { height } = Dimensions.get("window");
 
@@ -50,6 +51,7 @@ export default function PublicProfilePageWithId() {
   const [page, setPage] = useState(1);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [isLoadingSeries, setIsLoadingSeries] = useState(false);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
   // Ref to track if component has mounted to prevent unnecessary effects
@@ -98,6 +100,7 @@ export default function PublicProfilePageWithId() {
 
         if (pageToFetch === 1) {
           setVideos(data.videos); // replace
+          setHasInitiallyLoaded(true); // Mark as initially loaded
           // setVideosInZustand(data.videos);
         } else {
           setVideos((prev) => [...prev, ...data.videos]); // append
@@ -107,6 +110,9 @@ export default function PublicProfilePageWithId() {
       } catch (err) {
         console.error("Error fetching user videos:", err);
         Alert.alert("Error", "Unable to fetch videos.");
+        if (pageToFetch === 1) {
+          setHasInitiallyLoaded(true); // Mark as loaded even on error
+        }
       } finally {
         setIsLoadingVideos(false);
       }
@@ -216,11 +222,13 @@ export default function PublicProfilePageWithId() {
         });
 
         setSeries(firstEpisodes);
+        setHasInitiallyLoaded(true); // Mark as initially loaded
       } catch (err) {
         console.error("Error fetching user series:", err);
         if (err instanceof Error && !err.message.includes("No series found")) {
           Alert.alert("Error", err.message || "An unknown error occurred while fetching series.");
         }
+        setHasInitiallyLoaded(true); // Mark as loaded even on error
       } finally {
         setIsLoadingSeries(false);
       }
@@ -240,11 +248,13 @@ export default function PublicProfilePageWithId() {
       setPage(1);
       setHasMore(true);
       setIsLoadingVideos(false);
+      setHasInitiallyLoaded(false); // Reset initial load state
       setTimeout(() => {
         fetchUserVideos(1);
       }, 100);
     } else if (activeTab === "series") {
       console.log('📺 Fetching series...');
+      setHasInitiallyLoaded(false); // Reset initial load state
       fetchUserSeries();
     }
   }, [activeTab]);
@@ -596,6 +606,8 @@ export default function PublicProfilePageWithId() {
 
 
 
+
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "black" }} edges={[]}>
       <ThemedView style={{ flex: 1 }}>
@@ -607,7 +619,7 @@ export default function PublicProfilePageWithId() {
           numColumns={3} // Both videos and series use 3-column grid
           contentContainerStyle={{
             paddingBottom: 30,
-            paddingHorizontal: 0,
+            paddingHorizontal: 2,
           }}
           onEndReached={activeTab === "videos" ? () => fetchUserVideos(page + 1) : undefined}
           onEndReachedThreshold={0.8}
@@ -932,53 +944,61 @@ export default function PublicProfilePageWithId() {
                     </View>
                   </View>
 
-                  {/* Loading and Empty States */}
-                  {(isLoadingVideos || isLoadingSeries) && (
-                    <View className="w-full h-96 flex-1 items-center justify-center mt-20">
-                      <ActivityIndicator size="large" color="#fff" />
-                      <Text className="text-gray-400 mt-2">
-                        Loading {activeTab}...
-                      </Text>
-                    </View>
-                  )}
 
-                  {activeTab === "videos" && videos.length === 0 && !isLoadingVideos && (
-                    <View className="items-center justify-center px-4 py-20">
-                      <Image
-                        source={require("../../../../assets/images/logo.png")}
-                        style={{ width: 48, height: 48, opacity: 0.5 }}
-                        resizeMode="contain"
-                      />
-                      <Text className="text-white text-xl text-center mt-2">
-                        No videos found
-                      </Text>
-                      <Text className="text-gray-400 text-center mt-1">
-                        This user hasn't uploaded any videos yet
-                      </Text>
-                    </View>
-                  )}
-
-                  {activeTab === "series" && series.length === 0 && !isLoadingSeries && (
-                    <View className="items-center justify-center px-4 py-20">
-                      <Image
-                        source={require("../../../../assets/episode.png")}
-                        style={{ width: 48, height: 48 }}
-                        resizeMode="contain"
-                      />
-                      <Text className="text-white text-xl text-center mt-2">
-                        No episodes found
-                      </Text>
-                      <Text className="text-gray-400 text-center mt-1">
-                        This user hasn't created any series yet
-                      </Text>
-                    </View>
-                  )}
                 </View>
               )}
             </>
           }
+          ListEmptyComponent={() => {
+            // Show skeleton when loading OR when we haven't initially loaded yet
+            if (!hasInitiallyLoaded || 
+                (activeTab === "videos" && isLoadingVideos) || 
+                (activeTab === "series" && isLoadingSeries)) {
+              return <VideoGridSkeleton count={12} />;
+            }
+            
+            // Only show empty state when we have initially loaded and there's no data
+            if (activeTab === "videos" && hasInitiallyLoaded && !isLoadingVideos) {
+              return (
+                <View className="items-center justify-center px-4 py-20">
+                  <Image
+                    source={require("../../../../assets/images/logo.png")}
+                    style={{ width: 48, height: 48, opacity: 0.5 }}
+                    resizeMode="contain"
+                  />
+                  <Text className="text-white text-xl text-center mt-2">
+                    No videos found
+                  </Text>
+                  <Text className="text-gray-400 text-center mt-1">
+                    This user hasn't uploaded any videos yet
+                  </Text>
+                </View>
+              );
+            }
+            
+            if (activeTab === "series" && hasInitiallyLoaded && !isLoadingSeries) {
+              return (
+                <View className="items-center justify-center px-4 py-20">
+                  <Image
+                    source={require("../../../../assets/episode.png")}
+                    style={{ width: 48, height: 48 }}
+                    resizeMode="contain"
+                  />
+                  <Text className="text-white text-xl text-center mt-2">
+                    No episodes found
+                  </Text>
+                  <Text className="text-gray-400 text-center mt-1">
+                    This user hasn't created any series yet
+                  </Text>
+                </View>
+              );
+            }
+            
+            return null;
+          }}
           ListFooterComponent={
-            isLoadingVideos ? (
+            // Show loading indicator only when loading more pages (not initial load)
+            (activeTab === "videos" && isLoadingVideos && videos.length > 0) ? (
               <View style={{ padding: 20, alignItems: "center" }}>
                 <ActivityIndicator size="large" color="white" />
               </View>

@@ -25,13 +25,14 @@ import CreatorPassBuyMessage from "./CreatorPassBuyMessage";
 import VideoBuyMessage from "./VideoBuyMessage";
 import { useIsFocused } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
-
+import { PanGestureHandler, State } from "react-native-gesture-handler";
 
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useOrientationStore } from "@/store/useOrientationStore";
 import VideoProgressBar from "./VideoProgressBar";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from 'expo-haptics';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
 
@@ -110,6 +111,12 @@ const VideoPlayer = ({
   // ✅ NEW: Track if this is the first time becoming active for this video
   const [hasBeenActiveBefore, setHasBeenActiveBefore] = useState(false);
 
+  // Speed control states
+  const [currentSpeedLevel, setCurrentSpeedLevel] = useState(0); // 0 = 1x, 1 = 1.25x, 2 = 1.5x, 3 = 2x, 4 = 3x
+  const [showSpeedIndicator, setShowSpeedIndicator] = useState(false);
+  const speedLevels = [1.0, 1.25, 1.5, 2.0, 3.0];
+  const speedLabels = ["1x", "1.25x", "1.5x", "2x", "3x"];
+
   // Local stats
   const [localStats, setLocalStats] = useState({
     likes: videoData.likes || 0,
@@ -131,6 +138,111 @@ const VideoPlayer = ({
 
   const VIDEO_HEIGHT = containerHeight || screenHeight;
   const isFocused = useIsFocused();
+
+  // Speed control functions
+  const updatePlaybackSpeed = (speedLevel: number) => {
+    if (player && speedLevel >= 0 && speedLevel < speedLevels.length) {
+      const newSpeed = speedLevels[speedLevel];
+      player.playbackRate = newSpeed;
+      setCurrentSpeedLevel(speedLevel);
+      
+      // Add haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Show speed indicator
+      setShowSpeedIndicator(true);
+      setTimeout(() => setShowSpeedIndicator(false), 2000);
+      
+      console.log(`Speed changed to: ${speedLabels[speedLevel]}`);
+    }
+  };
+
+  const handleSpeedSwipe = (direction: 'left' | 'right') => {
+    if (direction === 'right') {
+      // Right swipe: 1x → 1.25x → 1.5x → 2x → 3x → 1x (cycle back)
+      let nextLevel;
+      
+      if (currentSpeedLevel >= speedLevels.length - 1) {
+        // If at maximum speed (3x), cycle back to 1x
+        nextLevel = 0;
+      } else {
+        // Otherwise, increase to next level
+        nextLevel = currentSpeedLevel + 1;
+      }
+      
+      if (nextLevel !== currentSpeedLevel) {
+        updatePlaybackSpeed(nextLevel);
+      }
+    } else {
+      // Left swipe - reverse order cycling: 1x → 3x → 2x → 1.5x → 1.25x → 1x
+      let nextLevel;
+      
+      switch (currentSpeedLevel) {
+        case 0: // 1x → 3x (jump to highest speed)
+          nextLevel = 4; // 3x
+          break;
+        case 4: // 3x → 2x
+          nextLevel = 3; // 2x
+          break;
+        case 3: // 2x → 1.5x
+          nextLevel = 2; // 1.5x
+          break;
+        case 2: // 1.5x → 1.25x
+          nextLevel = 1; // 1.25x
+          break;
+        case 1: // 1.25x → 1x (back to normal)
+          nextLevel = 0; // 1x
+          break;
+        default:
+          nextLevel = 0; // fallback to 1x
+      }
+      
+      if (nextLevel !== currentSpeedLevel) {
+        updatePlaybackSpeed(nextLevel);
+      }
+    }
+  };
+
+  // Track gesture state to prevent multiple triggers
+  const gestureRef = useRef({ lastTrigger: 0, isProcessing: false });
+
+  const onGestureEvent = (event: any) => {
+    const { translationX, velocityX, state } = event.nativeEvent;
+    const now = Date.now();
+    
+    // Prevent rapid successive triggers
+    if (gestureRef.current.isProcessing || now - gestureRef.current.lastTrigger < 300) {
+      return;
+    }
+    
+    // Only handle horizontal swipes with sufficient velocity and distance
+    if (Math.abs(velocityX) > 400 && Math.abs(translationX) > 40) {
+      gestureRef.current.isProcessing = true;
+      gestureRef.current.lastTrigger = now;
+      
+      if (translationX > 0) {
+        // Right swipe - increase speed
+        handleSpeedSwipe('right');
+      } else {
+        // Left swipe - decrease speed
+        handleSpeedSwipe('left');
+      }
+      
+      // Reset processing flag after a delay
+      setTimeout(() => {
+        gestureRef.current.isProcessing = false;
+      }, 200);
+    }
+  };
+
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      // Reset processing flag when gesture ends
+      setTimeout(() => {
+        gestureRef.current.isProcessing = false;
+      }, 100);
+    }
+  };
 
 
 
@@ -204,7 +316,7 @@ const VideoPlayer = ({
   const player = useVideoPlayer(videoData?.videoUrl || "", (p) => {
     p.loop = true;
     p.muted = isMutedFromStore;
-    p.playbackRate = 1.0;
+    p.playbackRate = speedLevels[currentSpeedLevel];
   });
 
   // Awake mobile screen
@@ -437,6 +549,10 @@ const VideoPlayer = ({
     setPlayerError(false);
     setAccessChecked(false);
     setCanPlayVideo(false);
+    
+    // Reset speed control when video changes
+    setCurrentSpeedLevel(0);
+    setShowSpeedIndicator(false);
     
     console.log(`VideoPlayer: Resetting states for video ${videoData._id}`);
   }, [videoData._id, videoData?.access?.freeRange?.start_time]);
@@ -698,6 +814,26 @@ const VideoPlayer = ({
     },
   });
 
+  const styles = StyleSheet.create({
+    speedIndicator: {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: [{ translateX: -30 }, { translateY: -20 }],
+      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      zIndex: 100,
+    },
+    speedText: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+  });
+
   // ✅ Safe fallback → show only thumbnail until access is checked
   if (!accessChecked) {
     return (
@@ -732,21 +868,39 @@ const VideoPlayer = ({
   return (
     <View style={dynamicStyles.container}>
       {player && canPlayVideo ? (
-        <View className="relative items-center justify-center">
-          <VideoView
-            player={player}
-            nativeControls={false}
-            style={dynamicStyles.video}
-            contentFit="cover"
-          />
-          {isBuffering && (
-            <ActivityIndicator
-              size="large"
-              color="white"
-              style={dynamicStyles.spinner}
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+          activeOffsetX={[-50, 50]}
+          failOffsetY={[-50, 50]}
+          minPointers={1}
+          maxPointers={1}
+        >
+          <View className="relative items-center justify-center">
+            <VideoView
+              player={player}
+              nativeControls={false}
+              style={dynamicStyles.video}
+              contentFit="cover"
             />
-          )}
-        </View>
+            {isBuffering && (
+              <ActivityIndicator
+                size="large"
+                color="white"
+                style={dynamicStyles.spinner}
+              />
+            )}
+            
+            {/* Speed Indicator */}
+            {showSpeedIndicator && (
+              <View style={styles.speedIndicator}>
+                <Text style={styles.speedText}>
+                  {speedLabels[currentSpeedLevel]}
+                </Text>
+              </View>
+            )}
+          </View>
+        </PanGestureHandler>
       ) : (
         <View className="relative">
           <Image

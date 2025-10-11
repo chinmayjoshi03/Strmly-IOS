@@ -27,6 +27,7 @@ import {
   useNavigation,
 } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
+import * as Haptics from 'expo-haptics';
 
 interface CommentsSectionProps {
   onClose: () => void;
@@ -93,6 +94,11 @@ const CommentsSection = ({
   );
   const [isModalVisible, setIsModalVisible] = useState(true);
   const lastGiftedCommentRef = useRef<string | null>(null);
+  
+  // Pull-to-dismiss state
+  const [scrollY, setScrollY] = useState(0);
+  const [isDismissing, setIsDismissing] = useState(false);
+  const dismissThreshold = 100; // pixels to scroll down before dismissing
 
   // Debug logging for lastGiftedCommentId changes
   useEffect(() => {
@@ -102,6 +108,8 @@ const CommentsSection = ({
 
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const previousScrollYRef = useRef(0);
+  const hapticTriggeredRef = useRef(false);
   const isFocused = useIsFocused();
   const navigation = useNavigation();
 
@@ -172,6 +180,14 @@ const CommentsSection = ({
   useEffect(() => {
     setIsModalVisible(true);
     return () => setIsModalVisible(false);
+  }, []);
+
+  // Reset dismissing state when modal opens
+  useEffect(() => {
+    setIsDismissing(false);
+    setScrollY(0);
+    previousScrollYRef.current = 0;
+    hapticTriggeredRef.current = false;
   }, []);
 
   // Define handleGiftSuccess function first
@@ -291,9 +307,15 @@ const CommentsSection = ({
           height: event.endCoordinates.height,
           screenY: event.endCoordinates.screenY,
           platform: Platform.OS,
+          safeAreaBottom: insets.bottom,
         });
-        // Set both keyboard height and input focused state together
-        setKeyboardHeight(event.endCoordinates.height);
+        
+        // For iOS, subtract the safe area bottom from keyboard height to get the actual usable space
+        const adjustedKeyboardHeight = Platform.OS === 'ios' 
+          ? event.endCoordinates.height - insets.bottom
+          : event.endCoordinates.height;
+        
+        setKeyboardHeight(adjustedKeyboardHeight);
         setIsInputFocused(true);
       }
     );
@@ -311,7 +333,7 @@ const CommentsSection = ({
       keyboardWillShowListener.remove();
       keyboardWillHideListener.remove();
     };
-  }, []);
+  }, [insets.bottom]);
 
   const handleInputFocus = () => {
     console.log("🎹 Input focused");
@@ -326,6 +348,44 @@ const CommentsSection = ({
 
   const handleInputBlur = () => {
     setIsInputFocused(false);
+  };
+
+  const handleScroll = (event: any) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const scrollViewHeight = event.nativeEvent.layoutMeasurement.height;
+    
+    setScrollY(currentScrollY);
+    previousScrollYRef.current = currentScrollY;
+    
+    // Only allow pull-to-dismiss when at the very top of content
+    // This prevents conflicts with normal scrolling within the content
+    const isAtTop = currentScrollY <= 0;
+    const isPullingDown = currentScrollY < 0; // Negative means overscroll/bounce
+    
+    if (isPullingDown && isAtTop && !isInputFocused) {
+      console.log("🔽 Pull-to-dismiss: ScrollY =", currentScrollY, "Threshold =", -dismissThreshold);
+      
+      // Haptic feedback at halfway point
+      if (currentScrollY < -50 && !hapticTriggeredRef.current) {
+        console.log("🔽 Haptic feedback triggered");
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        hapticTriggeredRef.current = true;
+      }
+      
+      // Dismiss when threshold reached
+      if (currentScrollY < -dismissThreshold && !isDismissing) {
+        console.log("🔽 DISMISSING! ScrollY:", currentScrollY);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setIsDismissing(true);
+        onClose();
+      }
+    }
+    
+    // Reset haptic trigger when not pulling down
+    if (currentScrollY >= -20) {
+      hapticTriggeredRef.current = false;
+    }
   };
 
   const handleSubmitComment = async () => {
@@ -904,15 +964,10 @@ const CommentsSection = ({
           position: "absolute",
           left: 0,
           right: 0,
-          ...(isInputFocused && keyboardHeight > 0 ? {
-            // When keyboard is open, position so the input sits above keyboard
-            bottom: keyboardHeight - 260,
-            height: Math.min(SCREEN_HEIGHT * 0.5, SCREEN_HEIGHT - keyboardHeight - 50),
-          } : {
-            // When keyboard is closed, normal positioning
-            bottom: BOTTOM_NAV_HEIGHT,
-            height: SHEET_MAX_HEIGHT,
-          }),
+          bottom: keyboardHeight > 0 ? keyboardHeight : BOTTOM_NAV_HEIGHT,
+          height: keyboardHeight > 0 
+            ? Math.min(SCREEN_HEIGHT * 0.6, SCREEN_HEIGHT - keyboardHeight - 50)
+            : SHEET_MAX_HEIGHT,
           backgroundColor: "#0E0E0E",
           borderTopLeftRadius: 36,
           borderTopRightRadius: 36,
@@ -927,10 +982,34 @@ const CommentsSection = ({
             style={{
               width: 56,
               height: 4,
-              backgroundColor: "#9E9E9E",
+              backgroundColor: scrollY < -30 ? "#F1C40F" : "#9E9E9E",
               borderRadius: 2,
+              transform: [{ scaleX: scrollY < -30 ? 1.3 : 1 }],
             }}
           />
+          {/* Show pull instruction */}
+          {scrollY <= 5 && scrollY >= -20 && (
+            <Text style={{ 
+              color: "#666666", 
+              fontSize: 11, 
+              marginTop: 6,
+              textAlign: "center"
+            }}>
+              Pull down to close
+            </Text>
+          )}
+          {/* Show progress when pulling */}
+          {scrollY < -20 && (
+            <Text style={{ 
+              color: scrollY < -dismissThreshold ? "#4CAF50" : "#F1C40F", 
+              fontSize: 13, 
+              marginTop: 6,
+              fontWeight: "500",
+              textAlign: "center"
+            }}>
+              {scrollY < -dismissThreshold ? "Release to close!" : `Pull ${Math.round(Math.abs(scrollY))}/${dismissThreshold}`}
+            </Text>
+          )}
         </View>
 
         {/* Header */}
@@ -957,10 +1036,12 @@ const CommentsSection = ({
           }}
           showsVerticalScrollIndicator={false}
           bounces={true}
+          alwaysBounceVertical={true}
           scrollEnabled={true}
-          nestedScrollEnabled={true}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {isLoading || monetizationLoading ? (
             <View

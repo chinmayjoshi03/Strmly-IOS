@@ -22,6 +22,7 @@ import Constants from "expo-constants";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useVideosStore } from "@/store/useVideosStore";
 import { getDeviceInfo, getResponsiveStyles } from "@/utils/deviceUtils";
+import VideoGridSkeleton from "@/components/VideoGridSkeleton";
 
 export default function PersonalProfilePage() {
   const [activeTab, setActiveTab] = useState("videos");
@@ -35,6 +36,7 @@ export default function PersonalProfilePage() {
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [isLoadingSeries, setIsLoadingSeries] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [showVideoMenu, setShowVideoMenu] = useState(false);
   const [selectedVideoMenu, setSelectedVideoMenu] = useState<string | null>(
     null
@@ -111,6 +113,7 @@ export default function PersonalProfilePage() {
 
         if (pageToFetch === 1) {
           setVideos(data.videos); // first page → replace
+          setHasInitiallyLoaded(true); // Mark as initially loaded
         } else {
           setVideos((prev) => [...prev, ...data.videos]); // next pages → append
         }
@@ -128,6 +131,9 @@ export default function PersonalProfilePage() {
             ? err.message
             : "An unknown error occurred while fetching videos."
         );
+        if (pageToFetch === 1) {
+          setHasInitiallyLoaded(true); // Mark as loaded even on error
+        }
       } finally {
         setIsLoadingVideos(false);
       }
@@ -264,6 +270,7 @@ export default function PersonalProfilePage() {
 
         console.log('📊 Transformed first episodes data:', firstEpisodes.length, 'series with first episodes');
         setSeries(firstEpisodes);
+        setHasInitiallyLoaded(true); // Mark as initially loaded
       } catch (err) {
         console.error("Error fetching user series:", err);
         // Don't show alert for "no series found" case
@@ -273,6 +280,7 @@ export default function PersonalProfilePage() {
             err.message || "An unknown error occurred while fetching series."
           );
         }
+        setHasInitiallyLoaded(true); // Mark as loaded even on error
       } finally {
         setIsLoadingSeries(false);
       }
@@ -337,12 +345,14 @@ export default function PersonalProfilePage() {
       setPage(1);
       setHasMore(true);
       setIsLoadingVideos(false); // Reset loading state
+      setHasInitiallyLoaded(false); // Reset initial load state
       // Add a small delay to ensure state is updated
       setTimeout(() => {
         fetchUserVideos(1);
       }, 100);
     } else if (activeTab === "series") {
       console.log('📺 Fetching series...');
+      setHasInitiallyLoaded(false); // Reset initial load state
       fetchUserSeries();
     }
   }, [activeTab]); // Only depend on activeTab to avoid infinite loops
@@ -759,16 +769,22 @@ export default function PersonalProfilePage() {
               </View>
             </View>
 
-            {(isLoadingVideos || isLoadingSeries) && (
-              <View className="w-full h-96 flex-1 items-center justify-center mt-20">
-                <ActivityIndicator size="large" color="#fff" />
-                <Text className="text-gray-400 mt-2">
-                  Loading {activeTab}...
-                </Text>
-              </View>
-            )}
 
-            {activeTab === "videos" && videos.length === 0 && !isLoadingVideos && (
+
+
+          </>
+        }
+        ListEmptyComponent={() => {
+          // Show skeleton when loading OR when we haven't initially loaded yet
+          if (!hasInitiallyLoaded || 
+              (activeTab === "videos" && isLoadingVideos) || 
+              (activeTab === "series" && isLoadingSeries)) {
+            return <VideoGridSkeleton count={12} />;
+          }
+          
+          // Only show empty state when we have initially loaded and there's no data
+          if (activeTab === "videos" && hasInitiallyLoaded && !isLoadingVideos) {
+            return (
               <View className="items-center justify-center px-4 py-20">
                 <Image
                   source={require("../../../assets/images/logo.png")}
@@ -782,9 +798,11 @@ export default function PersonalProfilePage() {
                   Upload your first video to get started
                 </Text>
               </View>
-            )}
-
-            {activeTab === "series" && series.length === 0 && !isLoadingSeries && (
+            );
+          }
+          
+          if (activeTab === "series" && hasInitiallyLoaded && !isLoadingSeries) {
+            return (
               <View className="items-center justify-center px-4 py-20">
                 <Image
                   source={require("../../../assets/episode.png")}
@@ -795,11 +813,21 @@ export default function PersonalProfilePage() {
                   No episodes found
                 </Text>
                 <Text className="text-gray-400 text-center mt-1">
-                  Create series with episodes to see them here
+                  Create your first series to get started
                 </Text>
               </View>
-            )}
-          </>
+            );
+          }
+          
+          return null;
+        }}
+        ListFooterComponent={
+          // Show loading indicator only when loading more pages (not initial load)
+          (activeTab === "videos" && isLoadingVideos && videos.length > 0) ? (
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <ActivityIndicator size="large" color="white" />
+            </View>
+          ) : null
         }
       />
       {/* </ThemedView> */}
